@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>РђРЅРєРµС‚Р° вЂ” KNEU | Circles</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #2d1b4e 100%);
+            color: #fff;
+            padding: 24px 16px 40px;
+        }
+
+        .header { text-align: center; margin-bottom: 28px; }
+        .header .logo { font-size: 40px; }
+        .header h1 { font-size: 22px; font-weight: 700; margin-top: 8px; }
+        .header p { font-size: 14px; opacity: 0.6; margin-top: 6px; }
+
+        .card {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-size: 13px; font-weight: 600; opacity: 0.8; margin-bottom: 6px; }
+        .field input, .field textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.25);
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .field input:focus, .field textarea:focus { border-color: #e94e77; }
+        .field textarea { resize: vertical; min-height: 88px; }
+        .field .hint { font-size: 11px; opacity: 0.45; margin-top: 4px; }
+
+        .row { display: flex; gap: 12px; }
+        .row .field { flex: 1; }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(90deg, #e94e77, #b83060);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:disabled { opacity: 0.5; cursor: wait; }
+
+        .error-box {
+            display: none;
+            background: rgba(233, 78, 119, 0.15);
+            border: 1px solid rgba(233, 78, 119, 0.5);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .success-screen { display: none; text-align: center; padding: 40px 10px; }
+        .success-screen .emoji { font-size: 56px; }
+        .success-screen h2 { font-size: 20px; margin: 16px 0 8px; }
+        .success-screen p { font-size: 14px; opacity: 0.7; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">рџЋ“рџ’«</div>
+        <h1>РЎС‚РІРѕСЂРё СЃРІРѕСЋ Р°РЅРєРµС‚Сѓ</h1>
+        <p id="greeting">Р—Р°РїРѕРІРЅРё вЂ” С– С‚РµР±Рµ РїРѕР±Р°С‡Р°С‚СЊ С–РЅС€С– СЃС‚СѓРґРµРЅС‚Рё KNEU</p>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <div class="card" id="formCard">
+        <div class="field">
+            <label for="fName">Р†Рј'СЏ *</label>
+            <input id="fName" type="text" maxlength="40" placeholder="РЇРє С‚РµР±Рµ Р·РІР°С‚Рё?">
+        </div>
+
+        <div class="row">
+            <div class="field">
+                <label for="fAge">Р’С–Рє *</label>
+                <input id="fAge" type="number" min="16" max="99" placeholder="18">
+            </div>
+            <div class="field">
+                <label for="fFaculty">Р¤Р°РєСѓР»СЊС‚РµС‚ *</label>
+                <input id="fFaculty" type="text" maxlength="60" list="faculties" placeholder="РћР±РµСЂРё Р°Р±Рѕ РІРІРµРґРё">
+                <datalist id="faculties">
+                    <option value="РњР°СЂРєРµС‚РёРЅРіСѓ"></option>
+                    <option value="Р¤С–РЅР°РЅСЃС–РІ"></option>
+                    <option value="РћР±Р»С–РєСѓ С– РµРєРѕРЅРѕРјС–РєРё РїС–РґРїСЂРёС”РјРЅРёС†С‚РІР°"></option>
+                    <option value="Р•РєРѕРЅРѕРјС–РєРё С‚Р° РїСЂР°РІР°"></option>
+                    <option value="РњС–Р¶РЅР°СЂРѕРґРЅРѕС— РµРєРѕРЅРѕРјС–РєРё С– РјРµРЅРµРґР¶РјРµРЅС‚Сѓ"></option>
+                    <option value="Р•РєРѕРЅРѕРјС–С‡РЅРѕС— РєС–Р±РµСЂРЅРµС‚РёРєРё"></option>
+                </datalist>
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="fBio">РџСЂРѕ СЃРµР±Рµ</label>
+            <textarea id="fBio" maxlength="300" placeholder="Р›СЋР±Р»СЋ РєР°РІСѓ Р±С–Р»СЏ РїРµСЂС€РѕРіРѕ РєРѕСЂРїСѓСЃСѓ в•"></textarea>
+            <div class="hint"><span id="bioCounter">0</span>/300 СЃРёРјРІРѕР»С–РІ</div>
+        </div>
+
+        <button class="btn" id="saveBtn">Р—Р±РµСЂРµРіС‚Рё Р°РЅРєРµС‚Сѓ рџ’ѕ</button>
+    </div>
+
+    <div class="success-screen" id="successScreen">
+        <div class="emoji">вњ…</div>
+        <h2>РђРЅРєРµС‚Сѓ Р·Р±РµСЂРµР¶РµРЅРѕ!</h2>
+        <p>РўРµРїРµСЂ Р·Р°РєСЂРёР№ С†Рµ РІС–РєРЅРѕ С– РЅР°РїРёС€Рё Р±РѕС‚Сѓ <b>/start</b> вЂ”<br>Р°Р±Рѕ РєСЂСѓС‚Рё РїР»СЏС€РµС‡РєСѓ рџЌѕ</p>
+    </div>
+
+    <script>
+        // === РќР°Р»Р°С€С‚СѓРІР°РЅРЅСЏ Supabase (РїС–РґСЃС‚Р°РІР»РµРЅРѕ Р°РІС‚РѕРјР°С‚РёС‡РЅРѕ Р· .env) ===
+        const SUPABASE_URL = 'https://qkrrskhzrffzlnvqforg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrcnJza2h6cmZmemxudnFmb3JnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzA4NzksImV4cCI6MjEwNDU0Njg3OX0.I-fQI5XkcrgF8-zINlqv-eYuvSaHCQjzkaLu8ueEwd4';
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const tg = window.Telegram?.WebApp;
+        const tgUser = tg?.initDataUnsafe?.user;
+
+        // Р“РѕС‚СѓС”РјРѕ РІС–РєРЅРѕ Telegram
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        const errorBox = document.getElementById('errorBox');
+        const saveBtn = document.getElementById('saveBtn');
+
+        function showError(text) {
+            errorBox.textContent = text;
+            errorBox.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // РЎС‚РѕСЂС–РЅРєР° РІС–РґРєСЂРёС‚Р° РЅРµ С‡РµСЂРµР· Telegram вЂ” С„РѕСЂРјР° РЅРµРґРѕСЃС‚СѓРїРЅР°
+        if (!tgUser) {
+            document.getElementById('formCard').style.display = 'none';
+            showError('Р¦СЏ СЃС‚РѕСЂС–РЅРєР° РїСЂР°С†СЋС” Р»РёС€Рµ РІСЃРµСЂРµРґРёРЅС– Telegram. Р’С–РґРєСЂРёР№ Р±РѕС‚Р° @KneuCirclesBot С– РЅР°С‚РёСЃРЅРё РєРЅРѕРїРєСѓ рџљЂ');
+        } else {
+            // Р’С–С‚Р°С”РјРѕ РєРѕСЂРёСЃС‚СѓРІР°С‡Р° Р№РѕРіРѕ С–Рј'СЏРј Р· Telegram
+            document.getElementById('greeting').textContent =
+                (tgUser.first_name ? tgUser.first_name + ', Р·Р°РїРѕРІ' : 'Р—Р°РїРѕРІ') + 'РЅРё вЂ” С– С‚РµР±Рµ РїРѕР±Р°С‡Р°С‚СЊ С–РЅС€С– СЃС‚СѓРґРµРЅС‚Рё KNEU';
+            document.getElementById('fName').value = tgUser.first_name || '';
+        }
+
+        // Р›С–С‡РёР»СЊРЅРёРє СЃРёРјРІРѕР»С–РІ РѕРїРёСЃСѓ
+        document.getElementById('fBio').addEventListener('input', function () {
+            document.getElementById('bioCounter').textContent = this.value.length;
+        });
+
+        saveBtn.addEventListener('click', async function () {
+            errorBox.style.display = 'none';
+
+            const name = document.getElementById('fName').value.trim();
+            const age = parseInt(document.getElementById('fAge').value, 10);
+            const faculty = document.getElementById('fFaculty').value.trim();
+            const bio = document.getElementById('fBio').value.trim();
+
+            if (!name) return showError('Р’РєР°Р¶Рё С–РјКјСЏ рџ™‚');
+            if (!age || age < 16 || age > 99) return showError('Р’С–Рє РјР°С” Р±СѓС‚Рё РІС–Рґ 16 РґРѕ 99');
+            if (!faculty) return showError('Р’РєР°Р¶Рё С„Р°РєСѓР»СЊС‚РµС‚ рџЋ“');
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Р—Р±РµСЂС–РіР°СЋ... вЏі';
+
+            try {
+                const { error } = await sb.from('users').upsert({
+                    user_id: tgUser.id,
+                    username: tgUser.username || null,
+                    first_name: name,
+                    age: age,
+                    faculty: faculty,
+                    bio: bio || null
+                }, { onConflict: 'user_id' });
+
+                if (error) throw error;
+
+                try { tg?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
+
+                document.getElementById('formCard').style.display = 'none';
+                document.getElementById('successScreen').style.display = 'block';
+            } catch (err) {
+                console.error(err);
+                try { tg?.HapticFeedback?.notificationOccurred('error'); } catch (e) {}
+                showError('РќРµ РІРґР°Р»РѕСЃСЏ Р·Р±РµСЂРµРіС‚Рё Р°РЅРєРµС‚Сѓ рџ” РЎРїСЂРѕР±СѓР№ С‰Рµ СЂР°Р·');
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Р—Р±РµСЂРµРіС‚Рё Р°РЅРєРµС‚Сѓ рџ’ѕ';
+            }
+        });
+    </script>
+</body>
+</html>
