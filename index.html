@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>KNEU | Circles</title>
+  
+  <!-- Підключення Telegram Web App та Hammer.js -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+  
+  <style>
+    body {
+      margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f8f9fa; color: #333; height: 100vh; display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    
+    /* Контейнери екранів */
+    .view-container {
+      flex: 1; overflow: hidden; display: none; flex-direction: column;
+      align-items: center; justify-content: center; width: 100%; position: relative;
+    }
+    .active-view { display: flex; }
+
+    /* --- СТИЛІ СВАЙПІВ (TINDER) --- */
+    .tinder { width: 100%; height: 100%; display: flex; flex-direction: column; position: relative; }
+    .tinder--cards { flex-grow: 1; display: flex; justify-content: center; align-items: center; z-index: 1; }
+    .tinder--card { 
+      display: inline-block; width: 90vw; max-width: 400px; height: 72vh; 
+      background: #FFFFFF; border-radius: 16px; overflow: hidden; 
+      position: absolute; will-change: transform; transition: all 0.3s ease-in-out; 
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08); 
+    }
+    .moving.tinder--card { transition: none; cursor: grabbing; }
+    .tinder--card img { max-width: 100%; height: 75%; object-fit: cover; width: 100%; pointer-events: none; }
+    .card-info { padding: 15px; text-align: left; }
+    .card-info h3 { margin: 0 0 5px 0; font-size: 22px; color: #222; }
+    .card-info p { margin: 0; color: #666; font-size: 14px; }
+
+    /* --- СТИЛІ ПЛЯШЕЧКИ --- */
+    .bottle-game { text-align: center; position: relative; width: 300px; height: 300px; margin-top: 20px; }
+    .avatar-circle {
+      position: absolute; width: 60px; height: 60px; border-radius: 50%;
+      background: #eef2f5; display: flex; align-items: center; justify-content: center;
+      font-size: 26px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 2px solid #fff;
+    }
+    .pos-1 { top: 0; left: 120px; }
+    .pos-2 { top: 120px; right: 0; }
+    .pos-3 { bottom: 0; left: 120px; }
+    .pos-4 { top: 120px; left: 0; }
+    
+    .bottle {
+      width: 44px; height: 130px; background: #2ecc71; border-radius: 14px 14px 6px 6px;
+      position: absolute; top: 85px; left: 128px; cursor: pointer;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+      transition: transform 3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* --- СТИЛІ НАВІГАЦІЇ --- */
+    .tab-bar {
+      height: 60px; background: #fff; display: flex; justify-content: space-around;
+      align-items: center; border-top: 1px solid #eaeaea; box-shadow: 0 -2px 10px rgba(0,0,0,0.04); z-index: 10;
+    }
+    .tab-btn {
+      flex: 1; text-align: center; font-size: 24px; padding: 10px;
+      cursor: pointer; opacity: 0.45; transition: 0.2s;
+    }
+    .active-tab { opacity: 1; border-bottom: 3px solid #0088cc; }
+  </style>
+</head>
+<body>
+
+  <!-- Вкладка 1: Свайпи -->
+  <div id="swipe-view" class="view-container active-view">
+    <div class="tinder">
+      <div class="tinder--cards">
+        <div class="tinder--card">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500">
+          <div class="card-info">
+            <h3>Олена, 20</h3>
+            <p>Маркетинг | Люблю каву біля першого корпусу ☕</p>
+          </div>
+        </div>
+        <div class="tinder--card">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500">
+          <div class="card-info">
+            <h3>Максим, 21</h3>
+            <p>Фінанси | Шукаю команду на хакатон 🚀</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Вкладка 2: Пляшечка -->
+  <div id="bottle-view" class="view-container">
+    <h2 style="margin: 0 0 10px 0;">Крути пляшечку!</h2>
+    <p style="margin: 0; color: #777;">Торкнись пляшечки, щоб обрати співрозмовника</p>
+    
+    <div class="bottle-game">
+      <div class="avatar-circle pos-1">👩🏼</div>
+      <div class="avatar-circle pos-2">🧔🏻</div>
+      <div class="avatar-circle pos-3">👩🏽</div>
+      <div class="avatar-circle pos-4">👨🏼</div>
+      <div class="bottle" id="bottle-element" onclick="spinBottle()"></div>
+    </div>
+  </div>
+
+  <!-- Нижня панель навігації -->
+  <div class="tab-bar">
+    <div class="tab-btn active-tab" onclick="switchTab('swipe-view', this)">🃏</div>
+    <div class="tab-btn" onclick="switchTab('bottle-view', this)">🍾</div>
+  </div>
+
+  <script>
+    // Ініціалізація Telegram Web App
+    let tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // 1. Навігація вкладок
+    function switchTab(viewId, btnElement) {
+      document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active-view'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active-tab'));
+      
+      document.getElementById(viewId).classList.add('active-view');
+      btnElement.classList.add('active-tab');
+    }
+
+    // 2. Механіка Пляшечки
+    let currentRotation = 0;
+    function spinBottle() {
+      let bottle = document.getElementById('bottle-element');
+      let randomDegree = Math.floor(Math.random() * 360) + (360 * 5); // 5 повних обертів + випадковий кут
+      currentRotation += randomDegree; 
+      bottle.style.transform = `rotate(${currentRotation}deg)`;
+      
+      setTimeout(() => {
+        if (tg.showAlert) {
+          tg.showAlert("Пляшечка обрала студента! Сповіщення надіслано 🎉");
+        } else {
+          alert("Пляшечка обрала студента! Сповіщення надіслано 🎉");
+        }
+      }, 3000);
+    }
+
+    // 3. Механіка свайпів (Hammer.js)
+    var allCards = document.querySelectorAll('.tinder--card');
+    
+    function initCards() {
+      var newCards = document.querySelectorAll('.tinder--card:not(.removed)');
+      newCards.forEach(function (card, index) {
+        card.style.zIndex = allCards.length - index;
+        card.style.transform = 'scale(' + (20 - index) / 20 + ') translateY(-' + 20 * index + 'px)';
+        card.style.opacity = (10 - index) / 10;
+      });
+    }
+    initCards();
+
+    allCards.forEach(function (el) {
+      var hammertime = new Hammer(el);
+      
+      hammertime.on('pan', function (event) {
+        el.classList.add('moving');
+        if (event.deltaX === 0) return;
+        var xMulti = event.deltaX * 0.03;
+        var yMulti = event.deltaY / 80;
+        var rotate = xMulti * yMulti;
+        event.target.style.transform = 'translate(' + event.deltaX + 'px, ' + event.deltaY + 'px) rotate(' + rotate + 'deg)';
+      });
+      
+      hammertime.on('panend', function (event) {
+        el.classList.remove('moving');
+        var moveOutWidth = document.body.clientWidth;
+        var keep = Math.abs(event.deltaX) < 80 || Math.abs(event.velocityX) < 0.5;
+        
+        event.target.classList.toggle('removed', !keep);
+        
+        if (keep) {
+          event.target.style.transform = '';
+        } else {
+          var endX = Math.max(Math.abs(event.velocityX) * moveOutWidth, moveOutWidth);
+          var toX = event.deltaX > 0 ? endX : -endX;
+          var endY = Math.abs(event.velocityY) * moveOutWidth;
+          var toY = event.deltaY > 0 ? endY : -endY;
+          var rotate = event.deltaX * 0.03 * (event.deltaY / 80);
+          
+          event.target.style.transform = 'translate(' + toX + 'px, ' + (toY + event.deltaY) + 'px) rotate(' + rotate + 'deg)';
+          initCards();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
