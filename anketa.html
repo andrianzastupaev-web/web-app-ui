@@ -49,6 +49,47 @@
         .row { display: flex; gap: 12px; }
         .row .field { flex: 1; }
 
+        .photos-row { display: flex; gap: 12px; }
+        .photo-slot {
+            position: relative;
+            flex: 1;
+            aspect-ratio: 3/4;
+            border-radius: 14px;
+            border: 1.5px dashed rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .photo-slot.filled { border-style: solid; border-color: #e94e77; }
+        .photo-slot .plus { font-size: 34px; opacity: 0.4; }
+        .photo-slot img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+        .photo-slot .remove {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.65);
+            color: #fff;
+            font-size: 15px;
+            line-height: 1;
+            display: none;
+            cursor: pointer;
+        }
+
         .btn {
             width: 100%;
             padding: 15px;
@@ -91,6 +132,25 @@
 
     <div class="card" id="formCard">
         <div class="field">
+            <label>Фото (до 2 шт.)</label>
+            <div class="photos-row">
+                <div class="photo-slot" id="slot0">
+                    <input type="file" accept="image/*" id="pick0" hidden>
+                    <div class="plus">＋</div>
+                    <img alt="" id="prev0">
+                    <button class="remove" id="rm0" type="button">×</button>
+                </div>
+                <div class="photo-slot" id="slot1">
+                    <input type="file" accept="image/*" id="pick1" hidden>
+                    <div class="plus">＋</div>
+                    <img alt="" id="prev1">
+                    <button class="remove" id="rm1" type="button">×</button>
+                </div>
+            </div>
+            <div class="hint">Натисни на рамку, щоб додати фото з телефону</div>
+        </div>
+
+        <div class="field">
             <label for="fName">Ім'я *</label>
             <input id="fName" type="text" maxlength="40" placeholder="Як тебе звати?">
         </div>
@@ -126,7 +186,7 @@
     <div class="success-screen" id="successScreen">
         <div class="emoji">✅</div>
         <h2>Анкету збережено!</h2>
-        <p>Тепер закрий це вікно і напиши боту <b>/start</b> —<br>або крути пляшечку 🍾</p>
+        <p>Тепер відкрий додаток через меню бота ☰<br>і крути пляшечку 🍾</p>
     </div>
 
     <script>
@@ -134,11 +194,11 @@
         const SUPABASE_URL = 'https://qkrrskhzrffzlnvqforg.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrcnJza2h6cmZmemxudnFmb3JnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzA4NzksImV4cCI6MjEwNDU0Njg3OX0.I-fQI5XkcrgF8-zINlqv-eYuvSaHCQjzkaLu8ueEwd4';
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const BUCKET = 'photos';
 
         const tg = window.Telegram?.WebApp;
         const tgUser = tg?.initDataUnsafe?.user;
 
-        // Готуємо вікно Telegram
         if (tg) {
             tg.ready();
             tg.expand();
@@ -153,18 +213,84 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Сторінка відкрита не через Telegram — форма недоступна
+        // === Робота з фото: до 2 шт., зі стисненням перед завантаженням ===
+        const photos = [null, null]; // тут лежать підготовлені Blob-об'єкти
+
+        // Стискаємо фото до 1280px (JPEG) — щоб швидко вантажилося з телефону
+        async function prepareImage(file) {
+            try {
+                const bitmap = await createImageBitmap(file);
+                const maxSide = 1280;
+                const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+                const w = Math.round(bitmap.width * scale);
+                const h = Math.round(bitmap.height * scale);
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+                const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85));
+                return blob || file;
+            } catch (e) {
+                return file; // якщо браузер не вміє — надсилаємо оригінал
+            }
+        }
+
+        for (let i = 0; i < 2; i++) {
+            const slot = document.getElementById('slot' + i);
+            const pick = document.getElementById('pick' + i);
+            const prev = document.getElementById('prev' + i);
+            const rm = document.getElementById('rm' + i);
+
+            slot.addEventListener('click', function (e) {
+                if (e.target === rm) return;
+                pick.click();
+            });
+
+            pick.addEventListener('change', async function () {
+                const file = this.files[0];
+                this.value = '';
+                if (!file) return;
+                if (!file.type.startsWith('image/')) return showError('Можна додавати лише зображення 📷');
+                photos[i] = await prepareImage(file);
+                prev.src = URL.createObjectURL(photos[i]);
+                prev.style.display = 'block';
+                slot.classList.add('filled');
+                rm.style.display = 'block';
+                errorBox.style.display = 'none';
+            });
+
+            rm.addEventListener('click', function () {
+                photos[i] = null;
+                prev.style.display = 'none';
+                prev.src = '';
+                slot.classList.remove('filled');
+                rm.style.display = 'none';
+            });
+        }
+
+        // Завантаження одного фото в Storage, повертає публічний URL
+        async function uploadPhoto(index) {
+            const blob = photos[index];
+            if (!blob) return null;
+            const path = 'users/' + tgUser.id + '/' + Date.now() + '_' + index + '.jpg';
+            const { error } = await sb.storage.from(BUCKET).upload(path, blob, {
+                contentType: 'image/jpeg'
+            });
+            if (error) throw error;
+            const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
+            return data.publicUrl;
+        }
+
+        // === Форма ===
         if (!tgUser) {
             document.getElementById('formCard').style.display = 'none';
             showError('Ця сторінка працює лише всередині Telegram. Відкрий бота @KneuCirclesBot і натисни кнопку 🚀');
         } else {
-            // Вітаємо користувача його ім'ям з Telegram
             document.getElementById('greeting').textContent =
                 (tgUser.first_name ? tgUser.first_name + ', запов' : 'Запов') + 'ни — і тебе побачать інші студенти KNEU';
             document.getElementById('fName').value = tgUser.first_name || '';
         }
 
-        // Лічильник символів опису
         document.getElementById('fBio').addEventListener('input', function () {
             document.getElementById('bioCounter').textContent = this.value.length;
         });
@@ -185,13 +311,26 @@
             saveBtn.textContent = 'Зберігаю... ⏳';
 
             try {
+                // 1. Завантажуємо фото (якщо обрані)
+                const hasPhotos = photos[0] || photos[1];
+                let photoUrl = null, photoUrl2 = null;
+                if (hasPhotos) {
+                    saveBtn.textContent = 'Завантажую фото... 📷';
+                    photoUrl = await uploadPhoto(0);
+                    photoUrl2 = await uploadPhoto(1);
+                }
+
+                // 2. Зберігаємо анкету
+                saveBtn.textContent = 'Зберігаю... ⏳';
                 const { error } = await sb.from('users').upsert({
                     user_id: tgUser.id,
                     username: tgUser.username || null,
                     first_name: name,
                     age: age,
                     faculty: faculty,
-                    bio: bio || null
+                    bio: bio || null,
+                    photo_url: photoUrl,
+                    photo_url2: photoUrl2
                 }, { onConflict: 'user_id' });
 
                 if (error) throw error;
@@ -211,3 +350,4 @@
     </script>
 </body>
 </html>
+
