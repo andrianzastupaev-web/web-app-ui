@@ -168,6 +168,13 @@
         <h2>Завантажую анкети...</h2>
     </div>
 
+    <!-- Стан: помилка завантаження -->
+    <div class="placeholder" id="loadError">
+        <div class="emoji">⚠️</div>
+        <h2>Не вдалося завантажити</h2>
+        <p>Сталася помилка. Закрий і відкрий додаток ще раз</p>
+    </div>
+
     <!-- Картка + кнопки -->
     <div id="deckWrap" style="display: none;">
         <div class="profile-card" id="card">
@@ -207,6 +214,7 @@
 
         const els = {
             loading: document.getElementById('loading'),
+            loadError: document.getElementById('loadError'),
             needRegister: document.getElementById('needRegister'),
             noMore: document.getElementById('noMore'),
             deckWrap: document.getElementById('deckWrap'),
@@ -222,7 +230,7 @@
         };
 
         function show(el) {
-            [els.loading, els.needRegister, els.noMore, els.deckWrap].forEach(function (e) {
+            [els.loading, els.loadError, els.needRegister, els.noMore, els.deckWrap].forEach(function (e) {
                 e.style.display = 'none';
             });
             if (el) el.style.display = 'block';
@@ -298,7 +306,7 @@
 
             // Чи заповнена моя анкета?
             const { data: me } = await sb.from('users')
-                .select('user_id').eq('user_id', tgUser.id).maybe_single();
+                .select('user_id').eq('user_id', tgUser.id).maybeSingle();
             if (!me) {
                 show(els.needRegister);
                 return;
@@ -326,7 +334,10 @@
         }
 
         show(els.loading);
-        init();
+        init().catch(function (err) {
+            console.error(err);
+            show(els.loadError);
+        });
     </script>
 </body>
 </html>
