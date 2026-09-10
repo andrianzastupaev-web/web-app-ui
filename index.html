@@ -180,7 +180,7 @@
         <div class="emoji">📝</div>
         <h2>Створи свою анкету</h2>
         <p>Додай фото, ім'я та пару слів про себе — і починай знайомитися</p>
-        <a class="cta" href="edit.html">Заповнити анкету ✨</a>
+        <a class="cta" href="edit.html?v=2">Заповнити анкету ✨</a>
     </div>
 
     <!-- Стан: завантаження -->
@@ -211,11 +211,11 @@
                 </div>
             </div>
         </div>
-        <a class="edit-btn" href="edit.html">✏️ Редагувати анкету</a>
+        <a class="edit-btn" href="edit.html?v=2">✏️ Редагувати анкету</a>
 
     <nav class="bottom-nav">
         <a href="search.html?v=3" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=4" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=7" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -292,8 +292,9 @@
             els.meta.textContent = me.city ? '📍 ' + me.city : '';
             els.bio.textContent = me.bio ? '“' + me.bio + '”' : '';
             els.bio.style.display = me.bio ? 'block' : 'none';
-            els.badge.textContent = me.username ? '@' + me.username : '';
-            els.badge.style.display = me.username ? 'block' : 'none';
+            const showName = me.username && me.show_username !== false;
+            els.badge.textContent = showName ? '@' + me.username : '';
+            els.badge.style.display = showName ? 'block' : 'none';
 
             show(els.profileWrap);
         }
