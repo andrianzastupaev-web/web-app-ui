@@ -270,7 +270,7 @@
 
     <nav class="bottom-nav">
         <a href="search.html?v=3" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=6" class="current" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=7" class="current" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -371,7 +371,8 @@
             const current = ((bottleDeg % 360) + 360) % 360;
             let delta = target - current;
             if (delta <= 0) delta += 360; // рухаємось лише вперед по колу
-            const turns = 2 + (round % 3); // 2-4 повних оберти, однаково в усіх гравців
+            // 2 чи 3 повних прокрути — псевдовипадково, але однаково в усіх гравців
+            const turns = 2 + ((round + targetIdx) % 2);
             bottleDeg += turns * 360 + delta;
             els.bottle.style.transform = 'rotate(' + bottleDeg + 'deg)';
         }
