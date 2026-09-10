@@ -229,7 +229,7 @@
         <div class="emoji">🤷‍♀️</div>
         <h2>Анкети закінчились</h2>
         <p>Ти переглянув усі нові анкети. Заглянь пізніше — з'являться нові учасники!</p>
-        <a class="cta" href="bottle.html?v=4">🍾 Крутити пляшечку</a>
+        <a class="cta" href="bottle.html?v=7">🍾 Крутити пляшечку</a>
     </div>
 
     <!-- Стан: завантаження -->
@@ -271,7 +271,7 @@
 
     <nav class="bottom-nav">
         <a href="search.html?v=3" class="current" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=4" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=7" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -366,8 +366,9 @@
             els.meta.textContent = u.city ? '📍 ' + u.city : '';
             els.bio.textContent = u.bio ? '“' + u.bio + '”' : '';
             els.bio.style.display = u.bio ? 'block' : 'none';
-            els.badge.textContent = u.username ? '@' + u.username : '';
-            els.badge.style.display = u.username ? 'block' : 'none';
+            const showName = u.username && u.show_username !== false;
+            els.badge.textContent = showName ? '@' + u.username : '';
+            els.badge.style.display = showName ? 'block' : 'none';
 
             els.card.classList.remove('card-out-left', 'card-out-right');
         }
@@ -463,4 +464,3 @@
     </script>
 </body>
 </html>
-
