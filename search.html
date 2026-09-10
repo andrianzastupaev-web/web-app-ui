@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Пошук — Circles</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #2d1b4e 100%);
+            color: #fff;
+            padding: 20px 16px calc(110px + env(safe-area-inset-bottom));
+        }
+
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .topbar h1 { font-size: 20px; }
+        .topbar a.back {
+            color: #fff;
+            opacity: 0.7;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .placeholder { text-align: center; padding: 60px 16px; display: none; }
+        .placeholder .emoji { font-size: 56px; }
+        .placeholder h2 { font-size: 19px; margin: 14px 0 8px; }
+        .placeholder p { font-size: 14px; opacity: 0.65; line-height: 1.5; }
+        .placeholder .cta {
+            display: inline-block;
+            margin-top: 18px;
+            padding: 14px 26px;
+            border-radius: 14px;
+            background: linear-gradient(90deg, #e94e77, #b83060);
+            color: #fff;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        /* Картка анкети */
+        .profile-card {
+            position: relative;
+            border-radius: 22px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .profile-card .photo {
+            width: 100%;
+            aspect-ratio: 3/4;
+            object-fit: cover;
+            display: block;
+            background: linear-gradient(160deg, #e94e77, #8e44ad);
+        }
+        .profile-card .photo-fallback {
+            width: 100%;
+            aspect-ratio: 3/4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 90px;
+            background: linear-gradient(160deg, #e94e77, #8e44ad);
+        }
+        .profile-card .info {
+            padding: 16px 18px 18px;
+        }
+        .profile-card .name { font-size: 22px; font-weight: 700; }
+        .profile-card .meta { font-size: 14px; opacity: 0.7; margin-top: 4px; }
+        .profile-card .bio {
+            font-size: 14px;
+            opacity: 0.85;
+            margin-top: 10px;
+            line-height: 1.5;
+            font-style: italic;
+        }
+        .profile-card .badge {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.5);
+            font-size: 12px;
+            font-weight: 600;
+            backdrop-filter: blur(6px);
+        }
+
+        /* Кнопки дій */
+        .actions { display: flex; justify-content: center; gap: 26px; margin-top: 20px; }
+        .actions button {
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.15s;
+        }
+        .actions button:active { transform: scale(0.88); }
+        .actions button:disabled { opacity: 0.4; }
+        .btn-dislike { background: rgba(255, 255, 255, 0.12); }
+        .btn-like { background: linear-gradient(135deg, #e94e77, #b83060); }
+
+        /* Анімація свайпу картки */
+        .card-out-left { transform: translateX(-120%) rotate(-14deg); opacity: 0; }
+        .card-out-right { transform: translateX(120%) rotate(14deg); opacity: 0; }
+
+        /* Нижнє меню: як на головній */
+        .bottom-nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
+            background: rgba(15, 15, 30, 0.85);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .bottom-nav a {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: transform 0.15s, background 0.15s;
+        }
+        .bottom-nav a:active { transform: scale(0.9); }
+        .bottom-nav a.current { background: rgba(233, 78, 119, 0.25); border-color: #e94e77; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>🔍 Пошук</h1>
+        <a class="back" href="index.html">← Моя анкета</a>
+    </div>
+
+    <!-- Стан: потрібно зареєструватися -->
+    <div class="placeholder" id="needRegister">
+        <div class="emoji">📝</div>
+        <h2>Спочатку — анкета</h2>
+        <p>Заповни свою анкету, щоб почати знайомитися з іншими учасниками</p>
+        <a class="cta" href="index.html">Заповнити анкету</a>
+    </div>
+
+    <!-- Стан: анкет немає -->
+    <div class="placeholder" id="noMore">
+        <div class="emoji">🤷‍♀️</div>
+        <h2>Анкети закінчились</h2>
+        <p>Ти переглянув усі нові анкети. Заглянь пізніше — з'являться нові учасники!</p>
+        <a class="cta" href="bottle.html">🍾 Крутити пляшечку</a>
+    </div>
+
+    <!-- Стан: завантаження -->
+    <div class="placeholder" id="loading">
+        <div class="emoji">⏳</div>
+        <h2>Завантажую анкети...</h2>
+    </div>
+
+    <!-- Картка + кнопки -->
+    <div id="deckWrap" style="display: none;">
+        <div class="profile-card" id="card">
+            <span class="badge" id="cBadge"></span>
+            <img class="photo" id="cPhoto" alt="">
+            <div class="photo-fallback" id="cFallback">🙂</div>
+            <div class="info">
+                <div class="name" id="cName"></div>
+                <div class="meta" id="cMeta"></div>
+                <div class="bio" id="cBio"></div>
+            </div>
+        </div>
+        <div class="actions">
+            <button class="btn-dislike" id="btnDislike" title="Не цікаво">❌</button>
+            <button class="btn-like" id="btnLike" title="Сподобалось">❤️</button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="search.html" class="current" title="Пошук анкет">🔍</a>
+        <a href="bottle.html" title="Пляшечка">🍾</a>
+    </nav>
+
+    <script>
+        // === Налаштування Supabase (підставлено автоматично з .env) ===
+        const SUPABASE_URL = 'https://qkrrskhzrffzlnvqforg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrcnJza2h6cmZmemxudnFmb3JnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzA4NzksImV4cCI6MjEwNDU0Njg3OX0.I-fQI5XkcrgF8-zINlqv-eYuvSaHCQjzkaLu8ueEwd4';
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const tg = window.Telegram?.WebApp;
+        const tgUser = tg?.initDataUnsafe?.user;
+
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        const els = {
+            loading: document.getElementById('loading'),
+            needRegister: document.getElementById('needRegister'),
+            noMore: document.getElementById('noMore'),
+            deckWrap: document.getElementById('deckWrap'),
+            card: document.getElementById('card'),
+            photo: document.getElementById('cPhoto'),
+            fallback: document.getElementById('cFallback'),
+            name: document.getElementById('cName'),
+            meta: document.getElementById('cMeta'),
+            bio: document.getElementById('cBio'),
+            badge: document.getElementById('cBadge'),
+            like: document.getElementById('btnLike'),
+            dislike: document.getElementById('btnDislike'),
+        };
+
+        function show(el) {
+            [els.loading, els.needRegister, els.noMore, els.deckWrap].forEach(function (e) {
+                e.style.display = 'none';
+            });
+            if (el) el.style.display = 'block';
+        }
+
+        let deck = [];
+        let pos = 0;
+        let busy = false;
+
+        function renderCard() {
+            const u = deck[pos];
+            const photo = u.photo_url || u.photo_url2;
+            if (photo) {
+                els.photo.src = photo;
+                els.photo.style.display = 'block';
+                els.fallback.style.display = 'none';
+            } else {
+                els.photo.style.display = 'none';
+                els.fallback.style.display = 'flex';
+            }
+            els.name.textContent = (u.first_name || 'Учасник') + (u.age ? ', ' + u.age : '');
+            els.meta.textContent = u.city ? '📍 ' + u.city : '';
+            els.bio.textContent = u.bio ? '"' + u.bio + '"' : '';
+            els.badge.textContent = u.username ? '@' + u.username : '';
+            els.badge.style.display = u.username ? 'block' : 'none';
+
+            // скидаємо анімацію з попередньої картки
+            els.card.classList.remove('card-out-left', 'card-out-right');
+        }
+
+        async function react(kind) {
+            if (busy) return;
+            busy = true;
+            els.like.disabled = true;
+            els.dislike.disabled = true;
+
+            const target = deck[pos];
+            try {
+                await sb.from('reactions').upsert({
+                    from_user: tgUser.id,
+                    to_user: target.user_id,
+                    kind: kind,
+                    notified: false
+                }, { onConflict: 'from_user,to_user' });
+                try { tg?.HapticFeedback?.notificationOccurred(kind === 'like' ? 'success' : 'warning'); } catch (e) {}
+            } catch (err) {
+                console.error(err);
+            }
+
+            // анімація вильоту
+            els.card.classList.add(kind === 'like' ? 'card-out-right' : 'card-out-left');
+            await new Promise(r => setTimeout(r, 320));
+
+            pos += 1;
+            if (pos >= deck.length) {
+                show(els.noMore);
+            } else {
+                renderCard();
+            }
+            els.like.disabled = false;
+            els.dislike.disabled = false;
+            busy = false;
+        }
+
+        els.like.addEventListener('click', function () { react('like'); });
+        els.dislike.addEventListener('click', function () { react('dislike'); });
+
+        async function init() {
+            if (!tgUser) {
+                show(els.needRegister);
+                return;
+            }
+
+            // Чи заповнена моя анкета?
+            const { data: me } = await sb.from('users')
+                .select('user_id').eq('user_id', tgUser.id).maybe_single();
+            if (!me) {
+                show(els.needRegister);
+                return;
+            }
+
+            // Кого я вже оцінив — не показуємо повторно
+            const rated = await sb.from('reactions')
+                .select('to_user').eq('from_user', tgUser.id);
+            const seen = new Set((rated.data || []).map(function (r) { return r.to_user; }));
+
+            // Усі учасники, крім себе й уже переглянутих
+            const all = await sb.from('users')
+                .select('*').order('created_at', { ascending: false }).limit(100);
+
+            deck = (all.data || []).filter(function (u) {
+                return u.user_id !== tgUser.id && !seen.has(u.user_id);
+            });
+
+            if (deck.length === 0) {
+                show(els.noMore);
+            } else {
+                show(els.deckWrap);
+                renderCard();
+            }
+        }
+
+        show(els.loading);
+        init();
+    </script>
+</body>
+</html>
