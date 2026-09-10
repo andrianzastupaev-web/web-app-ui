@@ -46,6 +46,21 @@
         .field textarea { resize: vertical; min-height: 88px; }
         .field .hint { font-size: 11px; opacity: 0.45; margin-top: 4px; }
 
+        .switch-row { display: flex; justify-content: space-between; align-items: center; }
+        .switch-row label:first-child { font-size: 13px; font-weight: 600; opacity: 0.8; }
+        .switch { position: relative; width: 52px; height: 30px; flex-shrink: 0; display: inline-block; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch .slider {
+            position: absolute; inset: 0; border-radius: 999px;
+            background: rgba(255, 255, 255, 0.15); transition: 0.25s; cursor: pointer;
+        }
+        .switch .slider:before {
+            content: ''; position: absolute; width: 24px; height: 24px; border-radius: 50%;
+            background: #fff; top: 3px; left: 3px; transition: 0.25s;
+        }
+        .switch input:checked + .slider { background: linear-gradient(90deg, #e94e77, #b83060); }
+        .switch input:checked + .slider:before { transform: translateX(22px); }
+
         .row { display: flex; gap: 12px; }
         .row .field { flex: 1; }
 
@@ -224,6 +239,17 @@
             <div class="hint"><span id="bioCounter">0</span>/300 символів</div>
         </div>
 
+        <div class="field">
+            <div class="switch-row">
+                <label>Показувати @username в анкеті</label>
+                <label class="switch">
+                    <input type="checkbox" id="fShowUsername" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="hint">Якщо вимкнено — анкету побачать, але без твого юзернейму</div>
+        </div>
+
         <button class="btn" id="saveBtn">Зберегти анкету 💾</button>
     </div>
 
@@ -237,7 +263,7 @@
 
     <nav class="bottom-nav">
         <a href="search.html?v=3" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=4" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=7" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -352,6 +378,7 @@
                 document.getElementById('fBio').value = me.bio;
                 document.getElementById('bioCounter').textContent = me.bio.length;
             }
+            document.getElementById('fShowUsername').checked = me.show_username !== false;
             existingPhotos = [me.photo_url || null, me.photo_url2 || null];
             existingPhotos.forEach(function (url, i) { if (url) showPreview(i, url); });
         }
@@ -397,7 +424,8 @@
                     city: city || null,
                     bio: bio || null,
                     photo_url: photoUrl,
-                    photo_url2: photoUrl2
+                    photo_url2: photoUrl2,
+                    show_username: document.getElementById('fShowUsername').checked
                 }, { onConflict: 'user_id' });
 
                 if (error) throw error;
