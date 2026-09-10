@@ -225,12 +225,13 @@
     </div>
 
     <!-- Стан: анкет немає -->
-    <div class="placeholder" id="noMore">
-        <div class="emoji">🤷‍♀️</div>
-        <h2>Анкети закінчились</h2>
-        <p>Ти переглянув усі нові анкети. Заглянь пізніше — з'являться нові учасники!</p>
-        <a class="cta" href="bottle.html?v=7">🍾 Крутити пляшечку</a>
-    </div>
+        <div class="placeholder" id="noMore">
+            <div class="emoji">🤷‍♀️</div>
+            <h2>Анкети закінчились</h2>
+            <p>Ти переглянув усі нові анкети. Заглянь пізніше — або подивись ще раз!</p>
+            <a class="cta" href="#" id="showAgain">🔄 Показати ще раз</a>
+            <a class="cta" href="bottle.html?v=7" style="margin-top: 12px;">🍾 Крутити пляшечку</a>
+        </div>
 
     <!-- Стан: завантаження -->
     <div class="placeholder" id="loading">
@@ -270,7 +271,7 @@
             <button class="btn-like" id="btnLike" title="Сподобалось">❤️</button>
 
     <nav class="bottom-nav">
-        <a href="search.html?v=3" class="current" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=4" class="current" title="Пошук анкет">🔍</a>
         <a href="bottle.html?v=7" title="Пляшечка">🍾</a>
     </nav>
 
@@ -421,6 +422,29 @@
         els.like.addEventListener('click', function () { react('like'); });
         els.dislike.addEventListener('click', function () { react('dislike'); });
 
+        async function loadDeck(showRatedAgain) {
+            // Кого я вже оцінив — не показуємо повторно (окрім режиму «ще раз»)
+            const rated = await sb.from('reactions')
+                .select('to_user').eq('from_user', tgUser.id);
+            const seen = new Set((rated.data || []).map(function (r) { return r.to_user; }));
+
+            const all = await sb.from('users')
+                .select('*').order('created_at', { ascending: false }).limit(100);
+
+            deck = (all.data || []).filter(function (u) {
+                return u.user_id !== tgUser.id
+                    && (showRatedAgain || !seen.has(u.user_id));
+            });
+            pos = 0;
+
+            if (deck.length === 0) {
+                show(els.noMore);
+            } else {
+                show(els.deckWrap);
+                renderCard();
+            }
+        }
+
         async function init() {
             if (!tgUser) {
                 show(els.needRegister);
@@ -435,26 +459,19 @@
                 return;
             }
 
-            // Кого я вже оцінив — не показуємо повторно
-            const rated = await sb.from('reactions')
-                .select('to_user').eq('from_user', tgUser.id);
-            const seen = new Set((rated.data || []).map(function (r) { return r.to_user; }));
-
-            // Усі учасники, крім себе й уже переглянутих
-            const all = await sb.from('users')
-                .select('*').order('created_at', { ascending: false }).limit(100);
-
-            deck = (all.data || []).filter(function (u) {
-                return u.user_id !== tgUser.id && !seen.has(u.user_id);
-            });
-
-            if (deck.length === 0) {
-                show(els.noMore);
-            } else {
-                show(els.deckWrap);
-                renderCard();
-            }
+            await loadDeck(false);
         }
+
+        // «Показати ще раз» — нове коло перегляду всіх анкет
+        document.getElementById('showAgain').addEventListener('click', async function () {
+            show(els.loading);
+            try {
+                await loadDeck(true);
+            } catch (err) {
+                console.error(err);
+                show(els.loadError);
+            }
+        });
 
         show(els.loading);
         init().catch(function (err) {
