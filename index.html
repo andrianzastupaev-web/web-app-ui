@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Моя анкета — Circles</title>
+    <title>Мій профіль — Circles</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -13,121 +13,132 @@
             min-height: 100vh;
             background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #2d1b4e 100%);
             color: #fff;
-            padding: 24px 16px calc(96px + env(safe-area-inset-bottom));
+            padding: 18px 16px calc(112px + env(safe-area-inset-bottom));
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .header { text-align: center; margin-bottom: 24px; }
-        .header .logo { font-size: 38px; }
-        .header h1 { font-size: 22px; font-weight: 700; margin-top: 6px; }
-        .header p { font-size: 14px; opacity: 0.6; margin-top: 6px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .topbar .brand { font-size: 20px; font-weight: 700; }
+        .topbar .brand span { opacity: 0.6; font-weight: 500; font-size: 14px; }
 
-        .card {
-            background: rgba(255, 255, 255, 0.07);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 20px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-        }
-
-        .field { margin-bottom: 16px; }
-        .field label { display: block; font-size: 13px; font-weight: 600; opacity: 0.8; margin-bottom: 6px; }
-        .field input, .field textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(0, 0, 0, 0.25);
-            color: #fff;
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .field input:focus, .field textarea:focus { border-color: #e94e77; }
-        .field textarea { resize: vertical; min-height: 88px; }
-        .field .hint { font-size: 11px; opacity: 0.45; margin-top: 4px; }
-
-        .row { display: flex; gap: 12px; }
-        .row .field { flex: 1; }
-
-        .photos-row { display: flex; gap: 12px; }
-        .photo-slot {
-            position: relative;
-            flex: 1;
-            aspect-ratio: 3/4;
+        .placeholder { text-align: center; padding: 70px 16px; display: none; }
+        .placeholder .emoji { font-size: 58px; }
+        .placeholder h2 { font-size: 19px; margin: 16px 0 8px; }
+        .placeholder p { font-size: 14px; opacity: 0.65; line-height: 1.55; }
+        .placeholder .cta {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 14px 30px;
             border-radius: 14px;
-            border: 1.5px dashed rgba(255, 255, 255, 0.3);
-            background: rgba(0, 0, 0, 0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            cursor: pointer;
-            transition: border-color 0.2s;
+            background: linear-gradient(90deg, #e94e77, #b83060);
+            color: #fff;
+            font-weight: 700;
+            text-decoration: none;
         }
-        .photo-slot.filled { border-style: solid; border-color: #e94e77; }
-        .photo-slot .plus { font-size: 34px; opacity: 0.4; }
-        .photo-slot img {
-            position: absolute;
-            inset: 0;
+
+        /* Картка профілю — така сама, як у пошуку */
+        .profile-card {
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            background: #20203a;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+        }
+        .photo-area { position: relative; width: 100%; aspect-ratio: 3/4; }
+        .photo-area .photo {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            display: none;
+            display: block;
         }
-        .photo-slot .remove {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(0, 0, 0, 0.65);
-            color: #fff;
-            font-size: 15px;
-            line-height: 1;
-            display: none;
-            cursor: pointer;
+        .photo-area .photo-fallback {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 96px;
+            background: linear-gradient(160deg, #e94e77, #8e44ad);
         }
 
-        .btn {
+        .photo-dots {
+            position: absolute;
+            top: 12px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+        }
+        .photo-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.45);
+            transition: background 0.2s, transform 0.2s;
+        }
+        .photo-dots span.active { background: #fff; transform: scale(1.15); }
+
+        .badge {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            padding: 7px 13px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.5);
+            font-size: 12px;
+            font-weight: 600;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .overlay {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 56px 18px 18px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.55) 45%, rgba(0, 0, 0, 0.82) 100%);
+        }
+        .overlay .name { font-size: 24px; font-weight: 800; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); }
+        .overlay .meta {
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-top: 3px;
+            text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+        }
+        .overlay .bio {
+            font-size: 13.5px;
+            line-height: 1.5;
+            font-style: italic;
+            opacity: 0.85;
+            margin-top: 9px;
+        }
+
+        .edit-btn {
+            display: block;
             width: 100%;
+            margin-top: 18px;
             padding: 15px;
-            margin-top: 8px;
             border: none;
             border-radius: 14px;
             background: linear-gradient(90deg, #e94e77, #b83060);
             color: #fff;
             font-size: 16px;
             font-weight: 700;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .btn:disabled { opacity: 0.5; cursor: wait; }
-
-        .error-box {
-            display: none;
-            background: rgba(233, 78, 119, 0.15);
-            border: 1px solid rgba(233, 78, 119, 0.5);
-            border-radius: 12px;
-            padding: 12px 14px;
-            font-size: 13px;
-            margin-bottom: 16px;
-        }
-
-        .success-screen { display: none; text-align: center; padding: 40px 10px; }
-        .success-screen .emoji { font-size: 56px; }
-        .success-screen h2 { font-size: 20px; margin: 16px 0 8px; }
-        .success-screen p { font-size: 14px; opacity: 0.7; line-height: 1.5; }
-        .success-screen .cta {
-            display: inline-block;
-            margin-top: 18px;
-            padding: 14px 28px;
-            border-radius: 14px;
-            background: linear-gradient(90deg, #8e44ad, #5b2c8d);
-            color: #fff;
-            font-weight: 700;
+            text-align: center;
             text-decoration: none;
+            box-shadow: 0 10px 26px rgba(214, 51, 108, 0.35);
+            transition: transform 0.15s;
+        }
+        .edit-btn:active { transform: scale(0.97); }
+
+        .view-hint {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 12px;
+            opacity: 0.5;
         }
 
         /* Нижнє меню: 🔍 зліва, 🍾 справа */
@@ -160,74 +171,48 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="logo">💫</div>
-        <h1>Моя анкета</h1>
-        <p id="greeting">Заповни — і починай знайомитися</p>
+    <div class="topbar">
+        <div class="brand">💫 Circles <span>— мій профіль</span></div>
     </div>
 
-    <div class="error-box" id="errorBox"></div>
-
-    <div class="card" id="formCard">
-        <div class="field">
-            <label>Фото (до 2 шт.)</label>
-            <div class="photos-row">
-                <div class="photo-slot" id="slot0">
-                    <input type="file" accept="image/*" id="pick0" hidden>
-                    <div class="plus">＋</div>
-                    <img alt="" id="prev0">
-                    <button class="remove" id="rm0" type="button">×</button>
-                </div>
-                <div class="photo-slot" id="slot1">
-                    <input type="file" accept="image/*" id="pick1" hidden>
-                    <div class="plus">＋</div>
-                    <img alt="" id="prev1">
-                    <button class="remove" id="rm1" type="button">×</button>
-                </div>
-            </div>
-            <div class="hint">Натисни на рамку, щоб додати або замінити фото</div>
-        </div>
-
-        <div class="field">
-            <label for="fName">Ім'я *</label>
-            <input id="fName" type="text" maxlength="40" placeholder="Як тебе звати?">
-        </div>
-
-        <div class="row">
-            <div class="field">
-                <label for="fAge">Вік *</label>
-                <input id="fAge" type="number" min="16" max="99" placeholder="18">
-            </div>
-            <div class="field">
-                <label for="fCity">Місто</label>
-                <input id="fCity" type="text" maxlength="40" list="cities" placeholder="Київ">
-                <datalist id="cities">
-                    <option value="Київ"></option>
-                    <option value="Львів"></option>
-                    <option value="Харків"></option>
-                    <option value="Одеса"></option>
-                    <option value="Дніпро"></option>
-                    <option value="Вінниця"></option>
-                    <option value="Запоріжжя"></option>
-                    <option value="Полтава"></option>
-                </datalist>
-            </div>
-        </div>
-
-        <div class="field">
-            <label for="fBio">Про себе</label>
-            <textarea id="fBio" maxlength="300" placeholder="Кава, музика, прогулянки ☕"></textarea>
-            <div class="hint"><span id="bioCounter">0</span>/300 символів</div>
-        </div>
-
-        <button class="btn" id="saveBtn">Зберегти анкету 💾</button>
+    <!-- Стан: ще немає анкети -->
+    <div class="placeholder" id="needRegister">
+        <div class="emoji">📝</div>
+        <h2>Створи свою анкету</h2>
+        <p>Додай фото, ім'я та пару слів про себе — і починай знайомитися</p>
+        <a class="cta" href="edit.html">Заповнити анкету ✨</a>
     </div>
 
-    <div class="success-screen" id="successScreen">
-        <div class="emoji">✅</div>
-        <h2>Анкету збережено!</h2>
-        <p>Твої дані оновлено</p>
-        <a class="cta" href="search.html?v=3">🔍 Дивитися анкети</a>
+    <!-- Стан: завантаження -->
+    <div class="placeholder" id="loading">
+        <div class="emoji">⏳</div>
+        <h2>Завантажую профіль...</h2>
+    </div>
+
+    <!-- Стан: помилка -->
+    <div class="placeholder" id="loadError">
+        <div class="emoji">⚠️</div>
+        <h2>Не вдалося завантажити</h2>
+        <p>Закрий і відкрий додаток ще раз</p>
+    </div>
+
+    <!-- Профіль -->
+    <div id="profileWrap" style="display: none;">
+        <div class="profile-card">
+            <div class="photo-area" id="photoArea">
+                <img class="photo" id="cPhoto" alt="">
+                <div class="photo-fallback" id="cFallback">🙂</div>
+                <div class="photo-dots" id="cDots"></div>
+                <span class="badge" id="cBadge"></span>
+                <div class="overlay">
+                    <div class="name" id="cName"></div>
+                    <div class="meta" id="cMeta"></div>
+                    <div class="bio" id="cBio"></div>
+                </div>
+            </div>
+        </div>
+        <a class="edit-btn" href="edit.html">✏️ Редагувати анкету</a>
+        <div class="view-hint">Так тебе бачать інші учасники 👀</div>
     </div>
 
     <nav class="bottom-nav">
@@ -240,7 +225,6 @@
         const SUPABASE_URL = 'https://qkrrskhzrffzlnvqforg.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrcnJza2h6cmZmemxudnFmb3JnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzA4NzksImV4cCI6MjEwNDU0Njg3OX0.I-fQI5XkcrgF8-zINlqv-eYuvSaHCQjzkaLu8ueEwd4';
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const BUCKET = 'photos';
 
         const tg = window.Telegram?.WebApp;
         const tgUser = tg?.initDataUnsafe?.user;
@@ -250,168 +234,94 @@
             tg.expand();
         }
 
-        const errorBox = document.getElementById('errorBox');
-        const saveBtn = document.getElementById('saveBtn');
+        const els = {
+            loading: document.getElementById('loading'),
+            loadError: document.getElementById('loadError'),
+            needRegister: document.getElementById('needRegister'),
+            profileWrap: document.getElementById('profileWrap'),
+            photo: document.getElementById('cPhoto'),
+            fallback: document.getElementById('cFallback'),
+            dots: document.getElementById('cDots'),
+            photoArea: document.getElementById('photoArea'),
+            name: document.getElementById('cName'),
+            meta: document.getElementById('cMeta'),
+            bio: document.getElementById('cBio'),
+            badge: document.getElementById('cBadge'),
+        };
 
-        function showError(text) {
-            errorBox.textContent = text;
-            errorBox.style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // === Фото: нові вибрані (Blob) + збережені раніше (URL) ===
-        const photos = [null, null];
-        let existingPhotos = [null, null];
-
-        function showPreview(i, src) {
-            const prev = document.getElementById('prev' + i);
-            prev.src = src;
-            prev.style.display = 'block';
-            document.getElementById('slot' + i).classList.add('filled');
-            document.getElementById('rm' + i).style.display = 'block';
-        }
-
-        function clearSlot(i) {
-            photos[i] = null;
-            existingPhotos[i] = null;
-            const prev = document.getElementById('prev' + i);
-            prev.style.display = 'none';
-            prev.src = '';
-            document.getElementById('slot' + i).classList.remove('filled');
-            document.getElementById('rm' + i).style.display = 'none';
-        }
-
-        // Стискаємо фото до 1280px (JPEG)
-        async function prepareImage(file) {
-            try {
-                const bitmap = await createImageBitmap(file);
-                const maxSide = 1280;
-                const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-                const w = Math.round(bitmap.width * scale);
-                const h = Math.round(bitmap.height * scale);
-                const canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
-                canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
-                const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85));
-                return blob || file;
-            } catch (e) {
-                return file;
-            }
-        }
-
-        for (let i = 0; i < 2; i++) {
-            const slot = document.getElementById('slot' + i);
-            const pick = document.getElementById('pick' + i);
-            const rm = document.getElementById('rm' + i);
-
-            slot.addEventListener('click', function (e) {
-                if (e.target === rm) return;
-                pick.click();
+        function show(el) {
+            [els.loading, els.loadError, els.needRegister, els.profileWrap].forEach(function (e) {
+                e.style.display = 'none';
             });
+            if (el) el.style.display = 'block';
+        }
 
-            pick.addEventListener('change', async function () {
-                const file = this.files[0];
-                this.value = '';
-                if (!file) return;
-                if (!file.type.startsWith('image/')) return showError('Можна додавати лише зображення 📷');
-                photos[i] = await prepareImage(file);
-                showPreview(i, URL.createObjectURL(photos[i]));
-                errorBox.style.display = 'none';
+        let myPhotos = [];
+        let photoIdx = 0;
+
+        // Тап по фото — перемикання між своїми фото
+        els.photoArea.addEventListener('click', function () {
+            if (myPhotos.length < 2) return;
+            photoIdx = (photoIdx + 1) % myPhotos.length;
+            els.photo.src = myPhotos[photoIdx];
+            els.dots.querySelectorAll('span').forEach(function (d, i) {
+                d.classList.toggle('active', i === photoIdx);
             });
-
-            rm.addEventListener('click', function () { clearSlot(i); });
-        }
-
-        async function uploadPhoto(index) {
-            const blob = photos[index];
-            if (!blob) return null;
-            const path = 'users/' + tgUser.id + '/' + Date.now() + '_' + index + '.jpg';
-            const { error } = await sb.storage.from(BUCKET).upload(path, blob, {
-                contentType: 'image/jpeg'
-            });
-            if (error) throw error;
-            const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
-            return data.publicUrl;
-        }
-
-        // === Завантаження існуючої анкети ===
-        async function loadMyProfile() {
-            const { data: me, error } = await sb.from('users')
-                .select('*').eq('user_id', tgUser.id).maybeSingle();
-            if (error || !me) return;
-
-            if (me.first_name) document.getElementById('fName').value = me.first_name;
-            if (me.age) document.getElementById('fAge').value = me.age;
-            if (me.city) document.getElementById('fCity').value = me.city;
-            if (me.bio) {
-                document.getElementById('fBio').value = me.bio;
-                document.getElementById('bioCounter').textContent = me.bio.length;
-            }
-            existingPhotos = [me.photo_url || null, me.photo_url2 || null];
-            existingPhotos.forEach(function (url, i) { if (url) showPreview(i, url); });
-        }
-
-        if (!tgUser) {
-            document.getElementById('formCard').style.display = 'none';
-            showError('Ця сторінка працює лише всередині Telegram. Відкрий бота і натисни 💫');
-        } else {
-            document.getElementById('greeting').textContent =
-                (tgUser.first_name ? tgUser.first_name + ', тут' : 'Тут') +
-                ' твоя анкета — редагуй у будь-який час';
-            document.getElementById('fName').value = tgUser.first_name || '';
-            loadMyProfile();
-        }
-
-        document.getElementById('fBio').addEventListener('input', function () {
-            document.getElementById('bioCounter').textContent = this.value.length;
         });
 
-        saveBtn.addEventListener('click', async function () {
-            errorBox.style.display = 'none';
+        function renderProfile(me) {
+            myPhotos = [me.photo_url, me.photo_url2].filter(Boolean);
+            photoIdx = 0;
 
-            const name = document.getElementById('fName').value.trim();
-            const age = parseInt(document.getElementById('fAge').value, 10);
-            const city = document.getElementById('fCity').value.trim();
-            const bio = document.getElementById('fBio').value.trim();
-
-            if (!name) return showError('Вкажи імʼя 🙂');
-            if (!age || age < 16 || age > 99) return showError('Вік має бути від 16 до 99');
-
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Зберігаю... ⏳';
-
-            try {
-                let photoUrl, photoUrl2;
-                if (photos[0] || photos[1]) saveBtn.textContent = 'Завантажую фото... 📷';
-                photoUrl = photos[0] ? await uploadPhoto(0) : existingPhotos[0];
-                photoUrl2 = photos[1] ? await uploadPhoto(1) : existingPhotos[1];
-
-                saveBtn.textContent = 'Зберігаю... ⏳';
-                const { error } = await sb.from('users').upsert({
-                    user_id: tgUser.id,
-                    username: tgUser.username || null,
-                    first_name: name,
-                    age: age,
-                    city: city || null,
-                    bio: bio || null,
-                    photo_url: photoUrl,
-                    photo_url2: photoUrl2
-                }, { onConflict: 'user_id' });
-
-                if (error) throw error;
-
-                try { tg?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
-
-                document.getElementById('formCard').style.display = 'none';
-                document.getElementById('successScreen').style.display = 'block';
-            } catch (err) {
-                console.error(err);
-                try { tg?.HapticFeedback?.notificationOccurred('error'); } catch (e) {}
-                showError('Не вдалося зберегти анкету 😔 Спробуй ще раз');
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'Зберегти анкету 💾';
+            if (myPhotos.length) {
+                els.photo.src = myPhotos[0];
+                els.photo.style.display = 'block';
+                els.fallback.style.display = 'none';
+            } else {
+                els.photo.style.display = 'none';
+                els.fallback.style.display = 'flex';
             }
+
+            els.dots.innerHTML = '';
+            myPhotos.forEach(function (_, i) {
+                const dot = document.createElement('span');
+                if (i === 0) dot.classList.add('active');
+                els.dots.appendChild(dot);
+            });
+            els.dots.style.display = myPhotos.length > 1 ? 'flex' : 'none';
+
+            els.name.textContent = (me.first_name || 'Учасник') + (me.age ? ', ' + me.age : '');
+            els.meta.textContent = me.city ? '📍 ' + me.city : '';
+            els.bio.textContent = me.bio ? '“' + me.bio + '”' : '';
+            els.bio.style.display = me.bio ? 'block' : 'none';
+            els.badge.textContent = me.username ? '@' + me.username : '';
+            els.badge.style.display = me.username ? 'block' : 'none';
+
+            show(els.profileWrap);
+        }
+
+        async function init() {
+            if (!tgUser) {
+                show(els.needRegister);
+                return;
+            }
+
+            const { data: me, error } = await sb.from('users')
+                .select('*').eq('user_id', tgUser.id).maybeSingle();
+
+            if (error) throw error;
+
+            if (!me) {
+                show(els.needRegister);
+            } else {
+                renderProfile(me);
+            }
+        }
+
+        show(els.loading);
+        init().catch(function (err) {
+            console.error(err);
+            show(els.loadError);
         });
     </script>
 </body>
