@@ -270,7 +270,7 @@
 
     <nav class="bottom-nav">
         <a href="search.html?v=3" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=4" class="current" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=6" class="current" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -363,10 +363,17 @@
             });
         }
 
-        function pointBottle(targetIdx, count) {
-            // 2 повних оберти + кут на ціль
-            const deg = 720 + angleOf(targetIdx, count);
-            els.bottle.style.transform = 'rotate(' + deg + 'deg)';
+        let bottleDeg = 0; // накопичений кут — пляшечка завжди крутиться вперед
+
+        function pointBottle(targetIdx, count, round) {
+            // Точний напрямок на гравця: гравець i стоїть на куті (i/count)*360
+            const target = (targetIdx / count) * 360 + 90;
+            const current = ((bottleDeg % 360) + 360) % 360;
+            let delta = target - current;
+            if (delta <= 0) delta += 360; // рухаємось лише вперед по колу
+            const turns = 2 + (round % 3); // 2-4 повних оберти, однаково в усіх гравців
+            bottleDeg += turns * 360 + delta;
+            els.bottle.style.transform = 'rotate(' + bottleDeg + 'deg)';
         }
 
         // === Дії гравця ===
@@ -452,7 +459,7 @@
 
             if (game.status === 'spinning' || game.status === 'result') {
                 const tIdx = game.players.indexOf(game.target);
-                if (tIdx >= 0) pointBottle(tIdx, count);
+                if (tIdx >= 0) pointBottle(tIdx, count, game.round);
 
                 if (game.status === 'spinning') {
                     if (game.spinner === tgUser.id) {
@@ -525,9 +532,39 @@
             render();
         }
 
+        // === Серцебиття: показуємо, що ми в грі (для авто-виходу) ===
+        let lastPing = 0;
+
+        async function pingPresence() {
+            if (!game || Date.now() - lastPing < 5000) return; // не частіше, ніж раз на 5 сек
+            lastPing = Date.now();
+            try {
+                await sb.from('bottle_presence').upsert({
+                    user_id: tgUser.id,
+                    game_id: game.id,
+                    seen_at: new Date().toISOString()
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Миттєвий вихід при закритті вікна (якщо пристрій дозволяє)
+        window.addEventListener('pagehide', function () {
+            if (!tgUser || !game) return;
+            try {
+                fetch(SUPABASE_URL + '/rest/v1/bottle_presence?user_id=eq.' + tgUser.id, {
+                    method: 'DELETE',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
+                    keepalive: true
+                });
+            } catch (e) {}
+        });
+
         async function pollNow() {
             try {
                 await fetchGame();
+                await pingPresence();
             } catch (err) {
                 console.error(err);
                 var msg = (err && err.message) ? err.message : String(err);
@@ -561,4 +598,3 @@
     </script>
 </body>
 </html>
-
