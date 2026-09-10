@@ -227,11 +227,11 @@
         <div class="emoji">✅</div>
         <h2>Анкету збережено!</h2>
         <p>Твої дані оновлено</p>
-        <a class="cta" href="search.html">🔍 Дивитися анкети</a>
+        <a class="cta" href="search.html?v=2">🔍 Дивитися анкети</a>
     </div>
 
     <nav class="bottom-nav">
-        <a href="search.html" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=2" title="Пошук анкет">🔍</a>
         <a href="bottle.html" title="Пляшечка">🍾</a>
     </nav>
 
@@ -338,7 +338,7 @@
         // === Завантаження існуючої анкети ===
         async function loadMyProfile() {
             const { data: me, error } = await sb.from('users')
-                .select('*').eq('user_id', tgUser.id).maybe_single();
+                .select('*').eq('user_id', tgUser.id).maybeSingle();
             if (error || !me) return;
 
             if (me.first_name) document.getElementById('fName').value = me.first_name;
