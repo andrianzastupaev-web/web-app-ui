@@ -270,7 +270,7 @@
 
     <nav class="bottom-nav">
         <a href="search.html?v=3" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=2" class="current" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=3" class="current" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -530,7 +530,9 @@
                 await fetchGame();
             } catch (err) {
                 console.error(err);
-                els.statusLine.textContent = '⚠️ Збій звʼязку, пробую ще...';
+                var msg = (err && err.message) ? err.message : String(err);
+                if (err && err.code) msg += ' [code ' + err.code + ']';
+                els.statusLine.textContent = '⚠️ ' + msg;
             }
         }
 
@@ -553,7 +555,8 @@
         show(els.loading);
         init().catch(function (err) {
             console.error(err);
-            show(els.needRegister);
+            var msg = (err && err.message) ? err.message : String(err);
+            els.statusLine.textContent = '⚠️ ' + msg;
         });
     </script>
 </body>
