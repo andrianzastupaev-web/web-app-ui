@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Анкета — KNEU | Circles</title>
+    <title>Моя анкета — KNEU | Circles</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -105,6 +105,20 @@
         }
         .btn:disabled { opacity: 0.5; cursor: wait; }
 
+        .link-btn {
+            display: block;
+            text-align: center;
+            margin-top: 14px;
+            padding: 13px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            opacity: 0.85;
+        }
+
         .error-box {
             display: none;
             background: rgba(233, 78, 119, 0.15);
@@ -119,12 +133,13 @@
         .success-screen .emoji { font-size: 56px; }
         .success-screen h2 { font-size: 20px; margin: 16px 0 8px; }
         .success-screen p { font-size: 14px; opacity: 0.7; line-height: 1.5; }
+        .success-screen .link-btn { margin-top: 20px; border: none; background: linear-gradient(90deg, #8e44ad, #5b2c8d); opacity: 1; }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="logo">🎓💫</div>
-        <h1>Створи свою анкету</h1>
+        <h1>Моя анкета</h1>
         <p id="greeting">Заповни — і тебе побачать інші студенти KNEU</p>
     </div>
 
@@ -147,7 +162,7 @@
                     <button class="remove" id="rm1" type="button">×</button>
                 </div>
             </div>
-            <div class="hint">Натисни на рамку, щоб додати фото з телефону</div>
+            <div class="hint">Натисни на рамку, щоб додати або замінити фото</div>
         </div>
 
         <div class="field">
@@ -181,12 +196,14 @@
         </div>
 
         <button class="btn" id="saveBtn">Зберегти анкету 💾</button>
+        <a class="link-btn" href="/">🍾 Крутити пляшечку</a>
     </div>
 
     <div class="success-screen" id="successScreen">
         <div class="emoji">✅</div>
         <h2>Анкету збережено!</h2>
-        <p>Тепер відкрий додаток через меню бота ☰<br>і крути пляшечку 🍾</p>
+        <p>Твої дані оновлено</p>
+        <a class="link-btn" href="/">🍾 Крутити пляшечку</a>
     </div>
 
     <script>
@@ -213,8 +230,27 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // === Робота з фото: до 2 шт., зі стисненням перед завантаженням ===
-        const photos = [null, null]; // тут лежать підготовлені Blob-об'єкти
+        // === Фото: нові вибрані (Blob) + збережені раніше (URL) ===
+        const photos = [null, null];          // щойно обрані файли
+        let existingPhotos = [null, null];    // URL з бази (якщо анкета вже є)
+
+        function showPreview(i, src) {
+            const prev = document.getElementById('prev' + i);
+            prev.src = src;
+            prev.style.display = 'block';
+            document.getElementById('slot' + i).classList.add('filled');
+            document.getElementById('rm' + i).style.display = 'block';
+        }
+
+        function clearSlot(i) {
+            photos[i] = null;
+            existingPhotos[i] = null;
+            const prev = document.getElementById('prev' + i);
+            prev.style.display = 'none';
+            prev.src = '';
+            document.getElementById('slot' + i).classList.remove('filled');
+            document.getElementById('rm' + i).style.display = 'none';
+        }
 
         // Стискаємо фото до 1280px (JPEG) — щоб швидко вантажилося з телефону
         async function prepareImage(file) {
@@ -231,14 +267,13 @@
                 const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85));
                 return blob || file;
             } catch (e) {
-                return file; // якщо браузер не вміє — надсилаємо оригінал
+                return file;
             }
         }
 
         for (let i = 0; i < 2; i++) {
             const slot = document.getElementById('slot' + i);
             const pick = document.getElementById('pick' + i);
-            const prev = document.getElementById('prev' + i);
             const rm = document.getElementById('rm' + i);
 
             slot.addEventListener('click', function (e) {
@@ -252,23 +287,14 @@
                 if (!file) return;
                 if (!file.type.startsWith('image/')) return showError('Можна додавати лише зображення 📷');
                 photos[i] = await prepareImage(file);
-                prev.src = URL.createObjectURL(photos[i]);
-                prev.style.display = 'block';
-                slot.classList.add('filled');
-                rm.style.display = 'block';
+                showPreview(i, URL.createObjectURL(photos[i]));
                 errorBox.style.display = 'none';
             });
 
-            rm.addEventListener('click', function () {
-                photos[i] = null;
-                prev.style.display = 'none';
-                prev.src = '';
-                slot.classList.remove('filled');
-                rm.style.display = 'none';
-            });
+            rm.addEventListener('click', function () { clearSlot(i); });
         }
 
-        // Завантаження одного фото в Storage, повертає публічний URL
+        // Завантаження нового фото в Storage, повертає публічний URL
         async function uploadPhoto(index) {
             const blob = photos[index];
             if (!blob) return null;
@@ -281,14 +307,32 @@
             return data.publicUrl;
         }
 
-        // === Форма ===
+        // === Завантаження існуючої анкети ===
+        async function loadMyProfile() {
+            const { data: me, error } = await sb.from('users')
+                .select('*').eq('user_id', tgUser.id).maybe_single();
+            if (error || !me) return;
+
+            if (me.first_name) document.getElementById('fName').value = me.first_name;
+            if (me.age) document.getElementById('fAge').value = me.age;
+            if (me.faculty) document.getElementById('fFaculty').value = me.faculty;
+            if (me.bio) {
+                document.getElementById('fBio').value = me.bio;
+                document.getElementById('bioCounter').textContent = me.bio.length;
+            }
+            existingPhotos = [me.photo_url || null, me.photo_url2 || null];
+            existingPhotos.forEach(function (url, i) { if (url) showPreview(i, url); });
+        }
+
         if (!tgUser) {
             document.getElementById('formCard').style.display = 'none';
             showError('Ця сторінка працює лише всередині Telegram. Відкрий бота @KneuCirclesBot і натисни кнопку 🚀');
         } else {
             document.getElementById('greeting').textContent =
-                (tgUser.first_name ? tgUser.first_name + ', запов' : 'Запов') + 'ни — і тебе побачать інші студенти KNEU';
+                (tgUser.first_name ? tgUser.first_name + ', тут' : 'Тут') +
+                ' твоя анкета — редагуй у будь-який час';
             document.getElementById('fName').value = tgUser.first_name || '';
+            loadMyProfile();
         }
 
         document.getElementById('fBio').addEventListener('input', function () {
@@ -311,14 +355,11 @@
             saveBtn.textContent = 'Зберігаю... ⏳';
 
             try {
-                // 1. Завантажуємо фото (якщо обрані)
-                const hasPhotos = photos[0] || photos[1];
-                let photoUrl = null, photoUrl2 = null;
-                if (hasPhotos) {
-                    saveBtn.textContent = 'Завантажую фото... 📷';
-                    photoUrl = await uploadPhoto(0);
-                    photoUrl2 = await uploadPhoto(1);
-                }
+                // 1. Фото: нові завантажуємо, інакше лишаємо збережені
+                let photoUrl, photoUrl2;
+                if (photos[0] || photos[1]) saveBtn.textContent = 'Завантажую фото... 📷';
+                photoUrl = photos[0] ? await uploadPhoto(0) : existingPhotos[0];
+                photoUrl2 = photos[1] ? await uploadPhoto(1) : existingPhotos[1];
 
                 // 2. Зберігаємо анкету
                 saveBtn.textContent = 'Зберігаю... ⏳';
@@ -350,4 +391,3 @@
     </script>
 </body>
 </html>
-
