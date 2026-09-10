@@ -1,195 +1,560 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>KNEU | Circles</title>
-  
-  <!-- Підключення Telegram Web App та Hammer.js -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
-  
-  <style>
-    body {
-      margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f8f9fa; color: #333; height: 100vh; display: flex; flex-direction: column;
-      overflow: hidden;
-    }
-    
-    /* Контейнери екранів */
-    .view-container {
-      flex: 1; overflow: hidden; display: none; flex-direction: column;
-      align-items: center; justify-content: center; width: 100%; position: relative;
-    }
-    .active-view { display: flex; }
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Пляшечка — Circles</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 
-    /* --- СТИЛІ СВАЙПІВ (TINDER) --- */
-    .tinder { width: 100%; height: 100%; display: flex; flex-direction: column; position: relative; }
-    .tinder--cards { flex-grow: 1; display: flex; justify-content: center; align-items: center; z-index: 1; }
-    .tinder--card { 
-      display: inline-block; width: 90vw; max-width: 400px; height: 72vh; 
-      background: #FFFFFF; border-radius: 16px; overflow: hidden; 
-      position: absolute; will-change: transform; transition: all 0.3s ease-in-out; 
-      box-shadow: 0 6px 20px rgba(0,0,0,0.08); 
-    }
-    .moving.tinder--card { transition: none; cursor: grabbing; }
-    .tinder--card img { max-width: 100%; height: 75%; object-fit: cover; width: 100%; pointer-events: none; }
-    .card-info { padding: 15px; text-align: left; }
-    .card-info h3 { margin: 0 0 5px 0; font-size: 22px; color: #222; }
-    .card-info p { margin: 0; color: #666; font-size: 14px; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #2d1b4e 100%);
+            color: #fff;
+            padding: 18px 16px calc(112px + env(safe-area-inset-bottom));
+            -webkit-tap-highlight-color: transparent;
+        }
 
-    /* --- СТИЛІ ПЛЯШЕЧКИ --- */
-    .bottle-game { text-align: center; position: relative; width: 300px; height: 300px; margin-top: 20px; }
-    .avatar-circle {
-      position: absolute; width: 60px; height: 60px; border-radius: 50%;
-      background: #eef2f5; display: flex; align-items: center; justify-content: center;
-      font-size: 26px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 2px solid #fff;
-    }
-    .pos-1 { top: 0; left: 120px; }
-    .pos-2 { top: 120px; right: 0; }
-    .pos-3 { bottom: 0; left: 120px; }
-    .pos-4 { top: 120px; left: 0; }
-    
-    .bottle {
-      width: 44px; height: 130px; background: #2ecc71; border-radius: 14px 14px 6px 6px;
-      position: absolute; top: 85px; left: 128px; cursor: pointer;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-      transition: transform 3s cubic-bezier(0.25, 1, 0.5, 1);
-    }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .topbar h1 { font-size: 20px; font-weight: 700; }
+        .topbar a.back { color: #fff; opacity: 0.7; text-decoration: none; font-size: 14px; font-weight: 600; }
 
-    /* --- СТИЛІ НАВІГАЦІЇ --- */
-    .tab-bar {
-      height: 60px; background: #fff; display: flex; justify-content: space-around;
-      align-items: center; border-top: 1px solid #eaeaea; box-shadow: 0 -2px 10px rgba(0,0,0,0.04); z-index: 10;
-    }
-    .tab-btn {
-      flex: 1; text-align: center; font-size: 24px; padding: 10px;
-      cursor: pointer; opacity: 0.45; transition: 0.2s;
-    }
-    .active-tab { opacity: 1; border-bottom: 3px solid #0088cc; }
-  </style>
+        .status-line {
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.75;
+            min-height: 20px;
+            margin-bottom: 8px;
+        }
+
+        .placeholder { text-align: center; padding: 70px 16px; display: none; }
+        .placeholder .emoji { font-size: 58px; }
+        .placeholder h2 { font-size: 19px; margin: 16px 0 8px; }
+        .placeholder p { font-size: 14px; opacity: 0.65; line-height: 1.55; }
+        .placeholder .cta {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 14px 30px;
+            border-radius: 14px;
+            background: linear-gradient(90deg, #e94e77, #b83060);
+            color: #fff;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        /* Ігровий екран */
+        #gameWrap { display: none; }
+
+        .arena {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            aspect-ratio: 1/1;
+            margin: 0 auto;
+        }
+        .arena .table-circle {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 40%, rgba(142, 68, 173, 0.35), rgba(20, 20, 40, 0.9) 75%);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Гравці по колу */
+        .player {
+            position: absolute;
+            width: 74px;
+            margin-left: -37px;
+            margin-top: -37px;
+            text-align: center;
+            transition: transform 0.2s;
+            z-index: 3;
+        }
+        .player .avatar {
+            width: 62px;
+            height: 62px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2.5px solid rgba(255, 255, 255, 0.35);
+            background: linear-gradient(160deg, #e94e77, #8e44ad);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+        .player .pname {
+            font-size: 11px;
+            margin-top: 4px;
+            opacity: 0.85;
+            max-width: 74px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .player.me .avatar { border-color: #e94e77; }
+        .player.target .avatar { border-color: #ffd166; box-shadow: 0 0 18px rgba(255, 209, 102, 0.65); }
+        .player.spinner .avatar { border-color: #7bdff2; box-shadow: 0 0 14px rgba(123, 223, 242, 0.5); }
+
+        /* Пляшечка */
+        .bottle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 150px;
+            height: 150px;
+            margin: -75px 0 0 -75px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 74px;
+            transform: rotate(0deg);
+            transition: transform 2.6s cubic-bezier(0.15, 0.9, 0.25, 1);
+            z-index: 2;
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
+            user-select: none;
+        }
+
+        /* Дії */
+        .actions { display: flex; justify-content: center; gap: 14px; margin-top: 18px; flex-wrap: wrap; }
+        .actions button {
+            flex: 1;
+            min-width: 70px;
+            max-width: 90px;
+            padding: 13px 6px 10px;
+            border: none;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #fff;
+            font-size: 26px;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .actions button small { display: block; font-size: 11px; margin-top: 4px; opacity: 0.8; }
+        .actions button:active { transform: scale(0.9); }
+
+        .spin-btn {
+            display: block;
+            width: 100%;
+            max-width: 420px;
+            margin: 18px auto 0;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(90deg, #8e44ad, #5b2c8d);
+            color: #fff;
+            font-size: 17px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 10px 26px rgba(93, 53, 152, 0.4);
+            transition: transform 0.15s;
+        }
+        .spin-btn:active { transform: scale(0.97); }
+        .spin-btn:disabled { opacity: 0.4; }
+
+        .leave-btn {
+            display: block;
+            width: 100%;
+            max-width: 420px;
+            margin: 10px auto 0;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            background: none;
+            color: #fff;
+            opacity: 0.7;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Результат дії */
+        .action-banner {
+            display: none;
+            max-width: 420px;
+            margin: 16px auto 0;
+            padding: 16px;
+            border-radius: 16px;
+            background: rgba(255, 209, 102, 0.12);
+            border: 1px solid rgba(255, 209, 102, 0.4);
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Нижнє меню */
+        .bottom-nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
+            background: rgba(15, 15, 30, 0.85);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .bottom-nav a {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: transform 0.15s, background 0.15s;
+        }
+        .bottom-nav a:active { transform: scale(0.9); }
+        .bottom-nav a.current { background: rgba(233, 78, 119, 0.25); border-color: #e94e77; }
+    </style>
 </head>
 <body>
-
-  <!-- Вкладка 1: Свайпи -->
-  <div id="swipe-view" class="view-container active-view">
-    <div class="tinder">
-      <div class="tinder--cards">
-        <div class="tinder--card">
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500">
-          <div class="card-info">
-            <h3>Олена, 20</h3>
-            <p>Маркетинг | Люблю каву біля першого корпусу ☕</p>
-          </div>
-        </div>
-        <div class="tinder--card">
-          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500">
-          <div class="card-info">
-            <h3>Максим, 21</h3>
-            <p>Фінанси | Шукаю команду на хакатон 🚀</p>
-          </div>
-        </div>
-      </div>
+    <div class="topbar">
+        <h1>🍾 Пляшечка</h1>
+        <a class="back" href="index.html">← Мій профіль</a>
     </div>
-  </div>
 
-  <!-- Вкладка 2: Пляшечка -->
-  <div id="bottle-view" class="view-container">
-    <h2 style="margin: 0 0 10px 0;">Крути пляшечку!</h2>
-    <p style="margin: 0; color: #777;">Торкнись пляшечки, щоб обрати співрозмовника</p>
-    
-    <div class="bottle-game">
-      <div class="avatar-circle pos-1">👩🏼</div>
-      <div class="avatar-circle pos-2">🧔🏻</div>
-      <div class="avatar-circle pos-3">👩🏽</div>
-      <div class="avatar-circle pos-4">👨🏼</div>
-      <div class="bottle" id="bottle-element" onclick="spinBottle()"></div>
+    <div class="status-line" id="statusLine"></div>
+
+    <!-- Потрібна анкета -->
+    <div class="placeholder" id="needRegister">
+        <div class="emoji">📝</div>
+        <h2>Спочатку — анкета</h2>
+        <p>Грають лише зареєстровані учасники. Заповни анкету і повертайся!</p>
+        <a class="cta" href="edit.html">Заповнити анкету</a>
     </div>
-  </div>
 
-  <!-- Нижня панель навігації -->
-  <div class="tab-bar">
-    <div class="tab-btn active-tab" onclick="switchTab('swipe-view', this)">🃏</div>
-    <div class="tab-btn" onclick="switchTab('bottle-view', this)">🍾</div>
-  </div>
+    <!-- Гра повна -->
+    <div class="placeholder" id="gameFull">
+        <div class="emoji">🚪</div>
+        <h2>Гра повна</h2>
+        <p>За столом уже 4 гравці — максимум для пляшечки. Спробуй пізніше!</p>
+        <a class="cta" href="search.html?v=3">🔍 Пошук анкет</a>
+    </div>
 
-  <script>
-    // Ініціалізація Telegram Web App
-    let tg = window.Telegram.WebApp;
-    tg.expand();
+    <!-- Завантаження -->
+    <div class="placeholder" id="loading">
+        <div class="emoji">⏳</div>
+        <h2>Завантажую гру...</h2>
+    </div>
 
-    // 1. Навігація вкладок
-    function switchTab(viewId, btnElement) {
-      document.querySelectorAll('.view-container').forEach(el => el.classList.remove('active-view'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active-tab'));
-      
-      document.getElementById(viewId).classList.add('active-view');
-      btnElement.classList.add('active-tab');
-    }
+    <!-- Ігровий екран -->
+    <div id="gameWrap">
+        <div class="arena">
+            <div class="table-circle"></div>
+            <div class="bottle" id="bottle">🍾</div>
+            <div id="playersLayer"></div>
+        </div>
 
-    // 2. Механіка Пляшечки
-    let currentRotation = 0;
-    function spinBottle() {
-      let bottle = document.getElementById('bottle-element');
-      let randomDegree = Math.floor(Math.random() * 360) + (360 * 5); // 5 повних обертів + випадковий кут
-      currentRotation += randomDegree; 
-      bottle.style.transform = `rotate(${currentRotation}deg)`;
-      
-      setTimeout(() => {
-        if (tg.showAlert) {
-          tg.showAlert("Пляшечка обрала студента! Сповіщення надіслано 🎉");
-        } else {
-          alert("Пляшечка обрала студента! Сповіщення надіслано 🎉");
+        <button class="spin-btn" id="spinBtn">🍾 Крутити!</button>
+
+        <div class="actions" id="actions" style="display: none;">
+            <button data-act="kiss">😘<small>поцілунок</small></button>
+            <button data-act="heart">❤️<small>сердечко</small></button>
+            <button data-act="dislike">👎<small>дизлайк</small></button>
+            <button data-act="tomato">🍅<small>помідор</small></button>
+        </div>
+
+        <div class="action-banner" id="actionBanner"></div>
+
+        <button class="leave-btn" id="leaveBtn">🚪 Залишити гру</button>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="search.html?v=3" title="Пошук анкет">🔍</a>
+        <a href="bottle.html?v=2" class="current" title="Пляшечка">🍾</a>
+    </nav>
+
+    <script>
+        // === Налаштування Supabase (підставлено автоматично з .env) ===
+        const SUPABASE_URL = 'https://qkrrskhzrffzlnvqforg.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrcnJza2h6cmZmemxudnFmb3JnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzA4NzksImV4cCI6MjEwNDU0Njg3OX0.I-fQI5XkcrgF8-zINlqv-eYuvSaHCQjzkaLu8ueEwd4';
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const tg = window.Telegram?.WebApp;
+        const tgUser = tg?.initDataUnsafe?.user;
+
+        if (tg) {
+            tg.ready();
+            tg.expand();
         }
-      }, 3000);
-    }
 
-    // 3. Механіка свайпів (Hammer.js)
-    var allCards = document.querySelectorAll('.tinder--card');
-    
-    function initCards() {
-      var newCards = document.querySelectorAll('.tinder--card:not(.removed)');
-      newCards.forEach(function (card, index) {
-        card.style.zIndex = allCards.length - index;
-        card.style.transform = 'scale(' + (20 - index) / 20 + ') translateY(-' + 20 * index + 'px)';
-        card.style.opacity = (10 - index) / 10;
-      });
-    }
-    initCards();
+        const MAX_PLAYERS = 4;
+        const POLL_MS = 1500;
 
-    allCards.forEach(function (el) {
-      var hammertime = new Hammer(el);
-      
-      hammertime.on('pan', function (event) {
-        el.classList.add('moving');
-        if (event.deltaX === 0) return;
-        var xMulti = event.deltaX * 0.03;
-        var yMulti = event.deltaY / 80;
-        var rotate = xMulti * yMulti;
-        event.target.style.transform = 'translate(' + event.deltaX + 'px, ' + event.deltaY + 'px) rotate(' + rotate + 'deg)';
-      });
-      
-      hammertime.on('panend', function (event) {
-        el.classList.remove('moving');
-        var moveOutWidth = document.body.clientWidth;
-        var keep = Math.abs(event.deltaX) < 80 || Math.abs(event.velocityX) < 0.5;
-        
-        event.target.classList.toggle('removed', !keep);
-        
-        if (keep) {
-          event.target.style.transform = '';
-        } else {
-          var endX = Math.max(Math.abs(event.velocityX) * moveOutWidth, moveOutWidth);
-          var toX = event.deltaX > 0 ? endX : -endX;
-          var endY = Math.abs(event.velocityY) * moveOutWidth;
-          var toY = event.deltaY > 0 ? endY : -endY;
-          var rotate = event.deltaX * 0.03 * (event.deltaY / 80);
-          
-          event.target.style.transform = 'translate(' + toX + 'px, ' + (toY + event.deltaY) + 'px) rotate(' + rotate + 'deg)';
-          initCards();
+        const els = {
+            loading: document.getElementById('loading'),
+            needRegister: document.getElementById('needRegister'),
+            gameFull: document.getElementById('gameFull'),
+            gameWrap: document.getElementById('gameWrap'),
+            playersLayer: document.getElementById('playersLayer'),
+            bottle: document.getElementById('bottle'),
+            spinBtn: document.getElementById('spinBtn'),
+            actions: document.getElementById('actions'),
+            banner: document.getElementById('actionBanner'),
+            leaveBtn: document.getElementById('leaveBtn'),
+            statusLine: document.getElementById('statusLine'),
+        };
+
+        const ACTION_TEXT = {
+            kiss: '😘 {a} поцілував(ла) {b}!',
+            heart: '❤️ {a} віддає сердечко {b}',
+            dislike: '👎 {a} ставить дизлайк {b}',
+            tomato: '🍅 {a} кидає помідор у {b}!'
+        };
+
+        let me = null;            // мій запис користувача
+        let game = null;          // поточний стан гри
+        let profiles = {};        // user_id -> профіль
+        let lastRound = -1;       // щоб зловити нову крутку
+        let myTurnNotified = false;
+
+        function show(el) {
+            [els.loading, els.needRegister, els.gameFull, els.gameWrap].forEach(function (e) {
+                e.style.display = 'none';
+            });
+            if (el) el.style.display = 'block';
         }
-      });
-    });
-  </script>
+
+        function nameOf(id) {
+            return profiles[id] ? (profiles[id].first_name || 'Учасник') : 'Учасник';
+        }
+
+        // === Розташування гравців по колу + кут пляшечки ===
+        function angleOf(playerIdx, count) {
+            return (playerIdx / count) * 360 - 90; // починаємо згори
+        }
+
+        function renderPlayers() {
+            const list = game.players;
+            els.playersLayer.innerHTML = '';
+            const R = 42; // % від розміру арени
+
+            list.forEach(function (uid, i) {
+                const ang = (angleOf(i, list.length) + 90) * Math.PI / 180;
+                const x = 50 + R * Math.cos(ang);
+                const y = 50 + R * Math.sin(ang);
+
+                const div = document.createElement('div');
+                div.className = 'player'
+                    + (uid === tgUser.id ? ' me' : '')
+                    + (game.target === uid ? ' target' : '')
+                    + (game.spinner === uid ? ' spinner' : '');
+
+                const p = profiles[uid];
+                const photo = p && (p.photo_url || p.photo_url2);
+                div.style.left = x + '%';
+                div.style.top = y + '%';
+                div.innerHTML =
+                    '<div class="avatar">' + (photo
+                        ? '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover" alt="">'
+                        + (p ? p.first_name ? p.first_name[0] : '?' : '?')
+                        : '?') + '</div>'
+                    + '<div class="pname">' + nameOf(uid) + '</div>';
+                els.playersLayer.appendChild(div);
+            });
+        }
+
+        function pointBottle(targetIdx, count) {
+            // 2 повних оберти + кут на ціль
+            const deg = 720 + angleOf(targetIdx, count);
+            els.bottle.style.transform = 'rotate(' + deg + 'deg)';
+        }
+
+        // === Дії гравця ===
+        els.spinBtn.addEventListener('click', async function () {
+            if (!game || game.status !== 'waiting' || game.players.length < 2) return;
+            const others = game.players.filter(function (u) { return u !== tgUser.id; });
+            const target = others[Math.floor(Math.random() * others.length)];
+
+            els.spinBtn.disabled = true;
+            try {
+                await sb.from('bottle_games').update({
+                    status: 'spinning',
+                    spinner: tgUser.id,
+                    target: target,
+                    action: null,
+                    round: game.round + 1
+                }).eq('id', game.id).execute();
+                pollNow();
+            } catch (err) {
+                console.error(err);
+                els.spinBtn.disabled = false;
+            }
+        });
+
+        els.actions.querySelectorAll('button').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                if (!game || game.status !== 'spinning' || game.spinner !== tgUser.id) return;
+                const act = btn.dataset.act;
+                els.actions.style.display = 'none';
+                try {
+                    await sb.from('bottle_games').update({
+                        status: 'result',
+                        action: act
+                    }).eq('id', game.id).eq('status', 'spinning').execute();
+                    pollNow();
+                } catch (err) {
+                    console.error(err);
+                }
+            });
+        });
+
+        els.leaveBtn.addEventListener('click', async function () {
+            if (!game) return;
+            const players = game.players.filter(function (u) { return u !== tgUser.id; });
+            const patch = players.length === 0
+                ? { status: 'finished', players: players }
+                : { players: players };
+            if (game.spinner === tgUser.id || game.target === tgUser.id) {
+                patch.status = players.length >= 2 ? 'waiting' : (players.length === 0 ? 'finished' : 'waiting');
+                patch.spinner = null;
+                patch.target = null;
+                patch.action = null;
+            }
+            await sb.from('bottle_games').update(patch).eq('id', game.id).execute();
+            window.location.href = 'index.html';
+        });
+
+        // === Головний рендер стану ===
+        function render() {
+            show(els.gameWrap);
+            renderPlayers();
+
+            const count = game.players.length;
+            els.spinBtn.style.display = 'none';
+            els.actions.style.display = 'none';
+            els.banner.style.display = 'none';
+
+            if (game.status === 'waiting') {
+                if (count < 2) {
+                    els.statusLine.textContent = 'Чекаємо ще гравців... (' + count + '/' + MAX_PLAYERS + ')';
+                    els.spinBtn.style.display = 'block';
+                    els.spinBtn.disabled = true;
+                    els.spinBtn.textContent = '⏳ Чекаємо гравців (нужно 2+)';
+                } else {
+                    els.statusLine.textContent = 'Гравців: ' + count + '/' + MAX_PLAYERS + '. Крутить: ' + nameOf(game.spinner || game.players[0]);
+                    els.spinBtn.style.display = 'block';
+                    els.spinBtn.disabled = game.spinner && game.spinner !== tgUser.id;
+                    els.spinBtn.textContent = (game.spinner && game.spinner !== tgUser.id)
+                        ? '⏳ ' + nameOf(game.spinner) + ' крутить...'
+                        : '🍾 Крутити!';
+                }
+            }
+
+            if (game.status === 'spinning' || game.status === 'result') {
+                const tIdx = game.players.indexOf(game.target);
+                if (tIdx >= 0) pointBottle(tIdx, count);
+
+                if (game.status === 'spinning') {
+                    if (game.spinner === tgUser.id) {
+                        els.statusLine.textContent = 'Пляшечка вказала на ' + nameOf(game.target) + '! Обери дію:';
+                        els.actions.style.display = 'flex';
+                    } else {
+                        els.statusLine.textContent = nameOf(game.spinner) + ' обирає дію для ' + nameOf(game.target) + '...';
+                    }
+                }
+
+                if (game.status === 'result' && game.action) {
+                    const text = ACTION_TEXT[game.action]
+                        .replace('{a}', nameOf(game.spinner))
+                        .replace('{b}', nameOf(game.target));
+                    els.banner.textContent = text;
+                    els.banner.style.display = 'block';
+                    els.statusLine.textContent = 'Наступним крутить: ' + nameOf(game.target);
+                    try { tg?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
+
+                    // Через 5 сек хід переходить до цілі (робить клієнт цілі, або будь-хто)
+                    setTimeout(async function () {
+                        await sb.from('bottle_games').update({
+                            status: 'waiting',
+                            spinner: game.target,
+                            target: null,
+                            action: null
+                        }).eq('id', game.id).eq('status', 'result').execute();
+                    }, 5000);
+                }
+            }
+        }
+
+        // === Опитування стану гри ===
+        async function fetchGame() {
+            const res = await sb.from('bottle_games')
+                .select('*').neq('status', 'finished')
+                .order('id', { ascending: false }).limit(1).maybeSingle();
+
+            if (res.error) throw res.error;
+            game = res.data;
+            if (!game) {
+                // Активної гри нема — створюємо
+                const created = await sb.from('bottle_games').insert({
+                    host_id: tgUser.id,
+                    players: [tgUser.id],
+                    status: 'waiting'
+                }).select().maybeSingle();
+                if (created.error) throw created.error;
+                game = created.data;
+            } else if (game.players.indexOf(tgUser.id) === -1) {
+                if (game.players.length >= MAX_PLAYERS) {
+                    show(els.gameFull);
+                    return;
+                }
+                const players = game.players.concat([tgUser.id]);
+                await sb.from('bottle_games').update({ players: players }).eq('id', game.id).execute();
+                game.players = players;
+            }
+
+            // Профілі всіх гравців
+            if (game.players.length) {
+                const pr = await sb.from('users').select('*').in('user_id', game.players);
+                profiles = {};
+                (pr.data || []).forEach(function (p) { profiles[p.user_id] = p; });
+            }
+
+            if (lastRound !== game.round) {
+                lastRound = game.round;
+            }
+            render();
+        }
+
+        async function pollNow() {
+            try {
+                await fetchGame();
+            } catch (err) {
+                console.error(err);
+                els.statusLine.textContent = '⚠️ Збій звʼязку, пробую ще...';
+            }
+        }
+
+        async function init() {
+            if (!tgUser) {
+                show(els.needRegister);
+                return;
+            }
+            const { data: my } = await sb.from('users')
+                .select('user_id').eq('user_id', tgUser.id).maybeSingle();
+            if (!my) {
+                show(els.needRegister);
+                return;
+            }
+            show(els.loading);
+            await pollNow();
+            setInterval(pollNow, POLL_MS);
+        }
+
+        show(els.loading);
+        init().catch(function (err) {
+            console.error(err);
+            show(els.needRegister);
+        });
+    </script>
 </body>
 </html>
