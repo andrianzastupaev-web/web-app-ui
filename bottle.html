@@ -270,7 +270,7 @@
 
     <nav class="bottom-nav">
         <a href="search.html?v=3" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=3" class="current" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=4" class="current" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -383,7 +383,7 @@
                     target: target,
                     action: null,
                     round: game.round + 1
-                }).eq('id', game.id).execute();
+                }).eq('id', game.id);
                 pollNow();
             } catch (err) {
                 console.error(err);
@@ -400,7 +400,7 @@
                     await sb.from('bottle_games').update({
                         status: 'result',
                         action: act
-                    }).eq('id', game.id).eq('status', 'spinning').execute();
+                    }).eq('id', game.id).eq('status', 'spinning');
                     pollNow();
                 } catch (err) {
                     console.error(err);
@@ -420,7 +420,7 @@
                 patch.target = null;
                 patch.action = null;
             }
-            await sb.from('bottle_games').update(patch).eq('id', game.id).execute();
+            await sb.from('bottle_games').update(patch).eq('id', game.id);
             window.location.href = 'index.html';
         });
 
@@ -479,7 +479,7 @@
                             spinner: game.target,
                             target: null,
                             action: null
-                        }).eq('id', game.id).eq('status', 'result').execute();
+                        }).eq('id', game.id).eq('status', 'result');
                     }, 5000);
                 }
             }
@@ -508,7 +508,7 @@
                     return;
                 }
                 const players = game.players.concat([tgUser.id]);
-                await sb.from('bottle_games').update({ players: players }).eq('id', game.id).execute();
+                await sb.from('bottle_games').update({ players: players }).eq('id', game.id);
                 game.players = players;
             }
 
@@ -561,3 +561,4 @@
     </script>
 </body>
 </html>
+
