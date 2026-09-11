@@ -105,13 +105,12 @@
             position: absolute;
             left: 50%;
             top: 50%;
-            width: 150px;
-            height: 150px;
-            margin: -75px 0 0 -75px;
+            width: 170px;
+            height: 170px;
+            margin: -85px 0 0 -85px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 74px;
             transform: rotate(0deg);
             /* Анімацію керує JavaScript (фізика обертання), тому transition не потрібен */
             transition: none;
@@ -119,6 +118,7 @@
             filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
             user-select: none;
         }
+        .bottle svg { display: block; }
 
         /* Дії */
         .actions { display: flex; justify-content: center; gap: 14px; margin-top: 18px; flex-wrap: wrap; }
@@ -251,7 +251,24 @@
     <div id="gameWrap">
         <div class="arena">
             <div class="table-circle"></div>
-            <div class="bottle" id="bottle">🍾</div>
+            <div class="bottle" id="bottle">
+                <svg width="84" height="196" viewBox="0 0 84 196" xmlns="http://www.w3.org/2000/svg">
+                    <!-- корок -->
+                    <rect x="34" y="2" width="16" height="11" rx="3" fill="#f2d8a9"/>
+                    <!-- золота фольга на шийці -->
+                    <rect x="30" y="11" width="24" height="27" rx="5" fill="#d9a441"/>
+                    <!-- шия -->
+                    <rect x="35" y="36" width="14" height="40" fill="#2e7d46"/>
+                    <!-- тіло -->
+                    <rect x="20" y="72" width="44" height="122" rx="16" fill="#2e7d46"/>
+                    <!-- тінь і відблиск скла -->
+                    <rect x="22" y="76" width="9" height="114" rx="4" fill="#1b5e35" opacity="0.85"/>
+                    <rect x="53" y="76" width="9" height="114" rx="4" fill="#4caf6e" opacity="0.75"/>
+                    <!-- етикетка -->
+                    <ellipse cx="42" cy="132" rx="17" ry="24" fill="#f7efdd"/>
+                    <text x="42" y="139" font-size="17" text-anchor="middle">💫</text>
+                </svg>
+            </div>
             <div id="playersLayer"></div>
         </div>
 
@@ -271,7 +288,7 @@
 
     <nav class="bottom-nav">
         <a href="search.html?v=4" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=8" class="current" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=9" class="current" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
