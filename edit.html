@@ -3,31 +3,43 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Редагувати анкету — Circles</title>
+    <title>Пляшечка — Circles</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 
+        html, body { height: 100%; }
+
         body {
-            min-height: 100vh;
-            background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #2d1b4e 100%);
+            background: linear-gradient(150deg, #12101f 0%, #1c1440 40%, #2b1050 70%, #1a1038 100%);
             color: #fff;
-            padding: 18px 16px calc(96px + env(safe-area-inset-bottom));
-                    animation: pageIn .35s ease;
+            padding: 18px 16px calc(112px + env(safe-area-inset-bottom));
+            -webkit-tap-highlight-color: transparent;
+            /* Сторінка гри зафіксована: жодних прокруток і гумових стрибків */
+            position: fixed;
+            inset: 0;
+            overflow: hidden auto;      /* всередині — лише якщо контент вищий за екран */
+            overscroll-behavior: none;  /* без «гумового» відскоку */
+            animation: pageIn .35s ease;
         }
         @keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* М'яке світіння на фоні (статичне) */
+        /* Світні кулі на фоні (статичні — без руху, щоб не відволікати і не грузити) */
         .orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-        .orbs i { position: absolute; border-radius: 50%; filter: blur(50px); opacity: 0.22; }
+        .orbs i {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(50px);
+            opacity: 0.25;
+        }
         .orbs i:nth-child(1) { width: 180px; height: 180px; background: #e94e77; top: 8%; left: -60px; }
         .orbs i:nth-child(2) { width: 220px; height: 220px; background: #8e44ad; bottom: 12%; right: -80px; }
-        body > *:not(.orbs):not(.bottom-nav) { position: relative; z-index: 1; }
-        .bottom-nav { z-index: 10; }
-        .placeholder .cta { box-shadow: 0 10px 24px rgba(233, 78, 119, 0.35); }
+        .orbs i:nth-child(3) { width: 140px; height: 140px; background: #3d5afe; top: 45%; left: 60%; }
 
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .topbar, .status-line, .placeholder, #gameWrap { position: relative; z-index: 1; }
+
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .topbar h1 {
             font-size: 21px; font-weight: 800;
             background: linear-gradient(90deg, #ffd166, #ff7eb3, #7bdff2);
@@ -36,136 +48,290 @@
         }
         .topbar a.back { color: #fff; opacity: 0.7; text-decoration: none; font-size: 14px; font-weight: 600; }
 
-        .card {
+        .status-line {
+            display: table;
+            margin: 0 auto 12px;
+            padding: 8px 18px;
+            border-radius: 999px;
             background: rgba(255, 255, 255, 0.07);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 20px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 13.5px;
+            opacity: 0.9;
+            min-height: 37px;   /* фіксована висота — сторінка не підстрибує */
+            text-align: center;
         }
 
-        .field { margin-bottom: 16px; }
-        .field label { display: block; font-size: 13px; font-weight: 600; opacity: 0.8; margin-bottom: 6px; }
-        .field input, .field textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(0, 0, 0, 0.25);
-            color: #fff;
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .field input:focus, .field textarea:focus { border-color: #e94e77; }
-        .field textarea { resize: vertical; min-height: 88px; }
-        .field .hint { font-size: 11px; opacity: 0.45; margin-top: 4px; }
-
-        .switch-row { display: flex; justify-content: space-between; align-items: center; }
-        .switch-row label:first-child { font-size: 13px; font-weight: 600; opacity: 0.8; }
-        .switch { position: relative; width: 52px; height: 30px; flex-shrink: 0; display: inline-block; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .switch .slider {
-            position: absolute; inset: 0; border-radius: 999px;
-            background: rgba(255, 255, 255, 0.15); transition: 0.25s; cursor: pointer;
-        }
-        .switch .slider:before {
-            content: ''; position: absolute; width: 24px; height: 24px; border-radius: 50%;
-            background: #fff; top: 3px; left: 3px; transition: 0.25s;
-        }
-        .switch input:checked + .slider { background: linear-gradient(90deg, #e94e77, #b83060); }
-        .switch input:checked + .slider:before { transform: translateX(22px); }
-
-        .row { display: flex; gap: 12px; }
-        .row .field { flex: 1; }
-
-        .photos-row { display: flex; gap: 12px; }
-        .photo-slot {
-            position: relative;
-            flex: 1;
-            aspect-ratio: 3/4;
-            border-radius: 14px;
-            border: 1.5px dashed rgba(255, 255, 255, 0.3);
-            background: rgba(0, 0, 0, 0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            cursor: pointer;
-            transition: border-color 0.2s;
-        }
-        .photo-slot.filled { border-style: solid; border-color: #e94e77; }
-        .photo-slot .plus { font-size: 34px; opacity: 0.4; }
-        .photo-slot img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: none;
-        }
-        .photo-slot .remove {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(0, 0, 0, 0.65);
-            color: #fff;
-            font-size: 15px;
-            line-height: 1;
-            display: none;
-            cursor: pointer;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 15px;
-            margin-top: 8px;
-            border: none;
+        .placeholder { text-align: center; padding: 70px 16px; display: none; }
+        .placeholder .emoji { font-size: 58px; }
+        .placeholder h2 { font-size: 19px; margin: 16px 0 8px; }
+        .placeholder p { font-size: 14px; opacity: 0.65; line-height: 1.55; }
+        .placeholder .cta {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 14px 30px;
             border-radius: 14px;
             background: linear-gradient(90deg, #e94e77, #b83060);
             color: #fff;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .btn:disabled { opacity: 0.5; cursor: wait; }
-
-        .error-box {
-            display: none;
-            background: rgba(233, 78, 119, 0.15);
-            border: 1px solid rgba(233, 78, 119, 0.5);
-            border-radius: 12px;
-            padding: 12px 14px;
-            font-size: 13px;
-            margin-bottom: 16px;
-        }
-
-        .success-screen { display: none; text-align: center; padding: 40px 10px; }
-        .success-screen .emoji { font-size: 56px; }
-        .success-screen h2 { font-size: 20px; margin: 16px 0 8px; }
-        .success-screen p { font-size: 14px; opacity: 0.7; line-height: 1.5; }
-        .success-screen .cta {
-            display: inline-block;
-            margin-top: 18px;
-            padding: 14px 28px;
-            border-radius: 14px;
-            background: linear-gradient(90deg, #8e44ad, #5b2c8d);
-            color: #fff;
             font-weight: 700;
             text-decoration: none;
-        }
-        .success-screen .cta.secondary {
-            display: block;
-            margin: 12px auto 0;
-            background: none;
-            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 10px 24px rgba(233, 78, 119, 0.35);
         }
 
+        /* === Ігровий стіл === */
+        #gameWrap { display: none; animation: fadeIn .4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
+
+        .arena {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            max-width: min(420px, 100%, 56dvh); /* стискається на низьких екранах — усе вміщається без прокрутки */
+            aspect-ratio: 1/1;
+            margin: 0 auto;
+        }
+        .arena .table-circle {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle at 50% 38%, rgba(142, 68, 173, 0.4), rgba(24, 16, 46, 0.95) 72%),
+                #1d1436;
+            border: 2px solid rgba(255, 209, 102, 0.35);
+            box-shadow:
+                inset 0 0 70px rgba(0, 0, 0, 0.65),
+                inset 0 0 22px rgba(233, 78, 119, 0.14),
+                0 18px 50px rgba(0, 0, 0, 0.55),
+                0 0 42px rgba(142, 68, 173, 0.25);
+        }
+        /* золотий ободок-кільце */
+        .arena .table-circle::before {
+            content: '';
+            position: absolute;
+            inset: 10px;
+            border-radius: 50%;
+            border: 1.5px dashed rgba(255, 209, 102, 0.28);
+        }
+        /* емблема в центрі */
+        .arena .emblem {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 120px;
+            opacity: 0.07;
+            user-select: none;
+            z-index: 1;
+        }
+
+        /* === Гравці === */
+        .player {
+            position: absolute;
+            width: 92px;
+            margin-left: -46px;
+            margin-top: -46px;
+            text-align: center;
+            z-index: 3;
+            animation: popIn .5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+            animation-delay: calc(var(--i) * 0.09s);
+        }
+        @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .player .avatar {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            background: linear-gradient(160deg, #e94e77, #8e44ad);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0 auto;
+            overflow: visible;
+        }
+        .player .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .player .pname {
+            display: table;
+            margin: 6px auto 0;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(6px);
+            font-size: 12.5px;
+            font-weight: 700;
+            max-width: 96px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .player.me .avatar { border-color: #ff7eb3; }
+        .player.me .pname { border: 1px solid rgba(255, 126, 179, 0.5); }
+
+        /* Ціль: пульсуючий золотий ореол */
+        .player.target .avatar { border-color: #ffd166; }
+        .player.target .avatar::after {
+            content: '';
+            position: absolute;
+            inset: -7px;
+            border-radius: 50%;
+            border: 2.5px solid rgba(255, 209, 102, 0.85);
+            animation: pulseGold 1.4s ease-out infinite;
+        }
+        .player.target .pname { background: rgba(255, 209, 102, 0.22); color: #ffe9a8; }
+        @keyframes pulseGold {
+            0% { transform: scale(0.85); opacity: 1; }
+            100% { transform: scale(1.45); opacity: 0; }
+        }
+
+        /* Крутячий: блакитний ореол */
+        .player.spinner .avatar { border-color: #7bdff2; }
+        .player.spinner .avatar::before {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 50%;
+            border: 2px solid rgba(123, 223, 242, 0.8);
+            animation: pulseCyan 1.8s ease-out infinite;
+        }
+        @keyframes pulseCyan {
+            0% { transform: scale(0.9); opacity: 0.9; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+
+        /* === Пляшечка === */
+        .bottle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 120px;
+            height: 120px;
+            margin: -60px 0 0 -60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(0deg);
+            transition: none;
+            z-index: 2;
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55));
+            user-select: none;
+            will-change: transform;
+        }
+        .bottle svg { display: block; }
+
+        /* Іскри при зупинці */
+        .spark {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            z-index: 5;
+            font-size: 15px;
+            pointer-events: none;
+            animation: sparkleFly 0.85s ease-out forwards;
+        }
+        @keyframes sparkleFly {
+            0% { transform: translate(0, 0) scale(1.25); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* === Кнопка «Крутити» === */
+        .spin-btn {
+            display: block;
+            width: 100%;
+            max-width: 420px;
+            margin: 18px auto 0;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(100deg, #8e44ad, #6d34a0);
+            color: #fff;
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            box-shadow: 0 12px 30px rgba(93, 53, 152, 0.45);
+            transition: transform 0.15s;
+        }
+        .spin-btn.ready { box-shadow: 0 12px 34px rgba(233, 78, 119, 0.55); }
+        .spin-btn:active { transform: scale(0.97); }
+        .spin-btn:disabled { opacity: 0.45; }
+
+        /* === Кнопки дій === */
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+        .actions button {
+            flex: 1;
+            min-width: 72px;
+            max-width: 92px;
+            padding: 14px 6px 11px;
+            border: none;
+            border-radius: 18px;
+            color: #fff;
+            font-size: 27px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s;
+            animation: btnPop .45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+            animation-delay: calc(var(--a) * 0.08s);
+        }
+        .actions button small { display: block; font-size: 11px; margin-top: 5px; font-weight: 600; opacity: 0.9; }
+        .actions button:nth-child(1) { background: linear-gradient(160deg, #ff7eb3, #e94e77); box-shadow: 0 8px 20px rgba(233, 78, 119, 0.4); }
+        .actions button:nth-child(2) { background: linear-gradient(160deg, #ff5f6d, #d6336c); box-shadow: 0 8px 20px rgba(214, 51, 108, 0.4); }
+        .actions button:nth-child(3) { background: linear-gradient(160deg, #748194, #4a5568); box-shadow: 0 8px 20px rgba(74, 85, 104, 0.5); }
+        .actions button:nth-child(4) { background: linear-gradient(160deg, #ff8c42, #e03e2f); box-shadow: 0 8px 20px rgba(224, 62, 47, 0.4); }
+        .actions button:active { transform: scale(0.88); }
+        @keyframes btnPop {
+            from { transform: translateY(16px) scale(0.6); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .leave-btn {
+            display: block;
+            width: 100%;
+            max-width: 420px;
+            margin: 12px auto 0;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 14px;
+            background: none;
+            color: #fff;
+            opacity: 0.65;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* === Банер результату (місце зарезервовано — без стрибків сторінки) === */
+        .action-banner {
+            visibility: hidden;
+            max-width: 420px;
+            margin: 16px auto 0;
+            padding: 16px;
+            min-height: 56px;
+            border-radius: 18px;
+            background: linear-gradient(120deg, rgba(255, 209, 102, 0.16), rgba(233, 78, 119, 0.14));
+            border: 1px solid rgba(255, 209, 102, 0.45);
+            text-align: center;
+            font-size: 16.5px;
+            font-weight: 700;
+            box-shadow: 0 10px 30px rgba(255, 209, 102, 0.12);
+        }
+        .action-banner.shown {
+            visibility: visible;
+            animation: bannerIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes bannerIn {
+            from { transform: translateY(16px) scale(0.9); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        /* Нижнє меню */
         .bottom-nav {
             position: fixed;
             left: 0;
@@ -174,9 +340,10 @@
             display: flex;
             justify-content: space-between;
             padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
-            background: rgba(15, 15, 30, 0.85);
-            backdrop-filter: blur(12px);
+            background: rgba(10, 8, 22, 0.88);
+            backdrop-filter: blur(14px);
             border-top: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 10;
         }
         .bottom-nav a {
             width: 54px;
@@ -192,95 +359,99 @@
             transition: transform 0.15s, background 0.15s;
         }
         .bottom-nav a:active { transform: scale(0.9); }
+        .bottom-nav a.current {
+            background: rgba(233, 78, 119, 0.25);
+            border-color: #e94e77;
+            box-shadow: 0 0 18px rgba(233, 78, 119, 0.35);
+        }
     </style>
 </head>
 <body>
-    <div class="orbs"><i></i><i></i></div>
+    <div class="orbs"><i></i><i></i><i></i></div>
 
     <div class="topbar">
-        <h1>✏️ Редагування анкети</h1>
+        <h1>🍾 Пляшечка</h1>
         <a class="back" href="index.html">← Мій профіль</a>
     </div>
 
-    <div class="error-box" id="errorBox"></div>
+    <div class="status-line" id="statusLine"></div>
 
-    <div class="card" id="formCard">
-        <div class="field">
-            <label>Фото (до 2 шт.)</label>
-            <div class="photos-row">
-                <div class="photo-slot" id="slot0">
-                    <input type="file" accept="image/*" id="pick0" hidden>
-                    <div class="plus">＋</div>
-                    <img alt="" id="prev0">
-                    <button class="remove" id="rm0" type="button">×</button>
-                </div>
-                <div class="photo-slot" id="slot1">
-                    <input type="file" accept="image/*" id="pick1" hidden>
-                    <div class="plus">＋</div>
-                    <img alt="" id="prev1">
-                    <button class="remove" id="rm1" type="button">×</button>
-                </div>
-            </div>
-            <div class="hint">Натисни на рамку, щоб додати або замінити фото</div>
-        </div>
-
-        <div class="field">
-            <label for="fName">Ім'я *</label>
-            <input id="fName" type="text" maxlength="40" placeholder="Як тебе звати?">
-        </div>
-
-        <div class="row">
-            <div class="field">
-                <label for="fAge">Вік *</label>
-                <input id="fAge" type="number" min="16" max="99" placeholder="18">
-            </div>
-            <div class="field">
-                <label for="fCity">Місто</label>
-                <input id="fCity" type="text" maxlength="40" list="cities" placeholder="Київ">
-                <datalist id="cities">
-                    <option value="Київ"></option>
-                    <option value="Львів"></option>
-                    <option value="Харків"></option>
-                    <option value="Одеса"></option>
-                    <option value="Дніпро"></option>
-                    <option value="Вінниця"></option>
-                    <option value="Запоріжжя"></option>
-                    <option value="Полтава"></option>
-                </datalist>
-            </div>
-        </div>
-
-        <div class="field">
-            <label for="fBio">Про себе</label>
-            <textarea id="fBio" maxlength="300" placeholder="Кава, музика, прогулянки ☕"></textarea>
-            <div class="hint"><span id="bioCounter">0</span>/300 символів</div>
-        </div>
-
-        <div class="field">
-            <div class="switch-row">
-                <label>Показувати @username в анкеті</label>
-                <label class="switch">
-                    <input type="checkbox" id="fShowUsername" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="hint">Якщо вимкнено — анкету побачать, але без твого юзернейму</div>
-        </div>
-
-        <button class="btn" id="saveBtn">Зберегти анкету 💾</button>
+    <!-- Потрібна анкета -->
+    <div class="placeholder" id="needRegister">
+        <div class="emoji">📝</div>
+        <h2>Спочатку — анкета</h2>
+        <p>Грають лише зареєстровані учасники. Заповни анкету і повертайся!</p>
+        <a class="cta" href="edit.html">Заповнити анкету</a>
     </div>
 
-    <div class="success-screen" id="successScreen">
-        <div class="emoji">✅</div>
-        <h2>Анкету збережено!</h2>
-        <p>Твої дані оновлено</p>
-        <a class="cta" href="search.html?v=6">🔍 Дивитися анкети</a>
-        <a class="cta secondary" href="index.html">👤 Мій профіль</a>
+    <!-- Гра повна -->
+    <div class="placeholder" id="gameFull">
+        <div class="emoji">🚪</div>
+        <h2>Гра повна</h2>
+        <p>За столом уже 4 гравці — максимум для пляшечки. Спробуй пізніше!</p>
+        <a class="cta" href="search.html?v=6">🔍 Пошук анкет</a>
+    </div>
+
+    <!-- Завантаження -->
+    <div class="placeholder" id="loading">
+        <div class="emoji">⏳</div>
+        <h2>Завантажую гру...</h2>
+    </div>
+
+    <!-- Ігровий екран -->
+    <div id="gameWrap">
+        <div class="arena">
+            <div class="table-circle"></div>
+            <div class="emblem">💫</div>
+            <div class="bottle" id="bottle">
+                <svg width="58" height="138" viewBox="0 0 58 138" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="glass" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0" stop-color="#215f39"/>
+                            <stop offset="0.45" stop-color="#3f9e63"/>
+                            <stop offset="1" stop-color="#1c5231"/>
+                        </linearGradient>
+                        <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0" stop-color="#e8c06a"/>
+                            <stop offset="0.5" stop-color="#f5da9b"/>
+                            <stop offset="1" stop-color="#c9973c"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- корок -->
+                    <rect x="23.5" y="2" width="11" height="8" rx="2.5" fill="#f6e3b4"/>
+                    <!-- золота фольга -->
+                    <rect x="20.5" y="9" width="17" height="18" rx="4" fill="url(#gold)"/>
+                    <!-- шия -->
+                    <rect x="24" y="25" width="10" height="28" fill="url(#glass)"/>
+                    <!-- струнке тіло -->
+                    <rect x="12.5" y="50" width="33" height="86" rx="12" fill="url(#glass)"/>
+                    <!-- відблиск скла -->
+                    <rect x="16" y="55" width="5" height="76" rx="2.5" fill="#6ecb92" opacity="0.65"/>
+                    <!-- етикетка -->
+                    <ellipse cx="29" cy="94" rx="12" ry="17" fill="#f8f1e0"/>
+                    <text x="29" y="100" font-size="12" text-anchor="middle">💫</text>
+                </svg>
+            </div>
+            <div id="playersLayer"></div>
+        </div>
+
+        <button class="spin-btn" id="spinBtn">🍾 Крутити!</button>
+
+        <div class="actions" id="actions" style="display: none;">
+            <button data-act="kiss" style="--a:0">😘<small>поцілунок</small></button>
+            <button data-act="heart" style="--a:1">❤️<small>сердечко</small></button>
+            <button data-act="dislike" style="--a:2">👎<small>дизлайк</small></button>
+            <button data-act="tomato" style="--a:3">🍅<small>помідор</small></button>
+        </div>
+
+        <div class="action-banner" id="actionBanner"></div>
+
+        <button class="leave-btn" id="leaveBtn">🚪 Залишити гру</button>
     </div>
 
     <nav class="bottom-nav">
         <a href="search.html?v=6" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=14" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=15" class="current" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -288,7 +459,6 @@
         const SUPABASE_URL = 'https://qkrrskhzrffzlnvqforg.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrcnJza2h6cmZmemxudnFmb3JnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzA4NzksImV4cCI6MjEwNDU0Njg3OX0.I-fQI5XkcrgF8-zINlqv-eYuvSaHCQjzkaLu8ueEwd4';
         const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const BUCKET = 'photos';
 
         const tg = window.Telegram?.WebApp;
         const tgUser = tg?.initDataUnsafe?.user;
@@ -298,166 +468,371 @@
             tg.expand();
         }
 
-        const errorBox = document.getElementById('errorBox');
-        const saveBtn = document.getElementById('saveBtn');
+        const MAX_PLAYERS = 4;
+        const POLL_MS = 1500;
 
-        function showError(text) {
-            errorBox.textContent = text;
-            errorBox.style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        const els = {
+            loading: document.getElementById('loading'),
+            needRegister: document.getElementById('needRegister'),
+            gameFull: document.getElementById('gameFull'),
+            gameWrap: document.getElementById('gameWrap'),
+            playersLayer: document.getElementById('playersLayer'),
+            bottle: document.getElementById('bottle'),
+            arena: document.querySelector('.arena'),
+            spinBtn: document.getElementById('spinBtn'),
+            actions: document.getElementById('actions'),
+            banner: document.getElementById('actionBanner'),
+            leaveBtn: document.getElementById('leaveBtn'),
+            statusLine: document.getElementById('statusLine'),
+        };
+
+        const ACTION_TEXT = {
+            kiss: '😘 {a} поцілував(ла) {b}!',
+            heart: '❤️ {a} віддає сердечко {b}',
+            dislike: '👎 {a} ставить дизлайк {b}',
+            tomato: '🍅 {a} кидає помідор у {b}!'
+        };
+
+        let me = null;            // мій запис користувача
+        let game = null;          // поточний стан гри
+        let profiles = {};        // user_id -> профіль
+        let lastRound = -1;       // щоб зловити нову крутку
+        let myTurnNotified = false;
+
+        function show(el) {
+            [els.loading, els.needRegister, els.gameFull, els.gameWrap].forEach(function (e) {
+                e.style.display = 'none';
+            });
+            if (el) el.style.display = 'block';
         }
 
-        // === Фото: нові вибрані (Blob) + збережені раніше (URL) ===
-        const photos = [null, null];
-        let existingPhotos = [null, null];
-
-        function showPreview(i, src) {
-            const prev = document.getElementById('prev' + i);
-            prev.src = src;
-            prev.style.display = 'block';
-            document.getElementById('slot' + i).classList.add('filled');
-            document.getElementById('rm' + i).style.display = 'block';
+        function nameOf(id) {
+            return profiles[id] ? (profiles[id].first_name || 'Учасник') : 'Учасник';
         }
 
-        function clearSlot(i) {
-            photos[i] = null;
-            existingPhotos[i] = null;
-            const prev = document.getElementById('prev' + i);
-            prev.style.display = 'none';
-            prev.src = '';
-            document.getElementById('slot' + i).classList.remove('filled');
-            document.getElementById('rm' + i).style.display = 'none';
+        // === Розташування гравців по колу + кут пляшечки ===
+        function angleOf(playerIdx, count) {
+            return (playerIdx / count) * 360 - 90; // починаємо згори
         }
 
-        async function prepareImage(file) {
-            try {
-                const bitmap = await createImageBitmap(file);
-                const maxSide = 1280;
-                const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-                const w = Math.round(bitmap.width * scale);
-                const h = Math.round(bitmap.height * scale);
-                const canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
-                canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
-                const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85));
-                return blob || file;
-            } catch (e) {
-                return file;
+        let lastRenderKey = ''; // щоб не перемальовувати без змін (анімації не грають зайвий раз)
+
+        function renderPlayers() {
+            const list = game.players;
+            const key = list.join(',') + '|' + (game.target || '') + '|' + (game.spinner || '');
+            if (key === lastRenderKey) return;
+            lastRenderKey = key;
+
+            els.playersLayer.innerHTML = '';
+            const R = 44; // % від розміру арени — ширше коло для великих аватарок
+
+            list.forEach(function (uid, i) {
+                const ang = (angleOf(i, list.length) + 90) * Math.PI / 180;
+                const x = 50 + R * Math.cos(ang);
+                const y = 50 + R * Math.sin(ang);
+
+                const div = document.createElement('div');
+                div.className = 'player'
+                    + (uid === tgUser.id ? ' me' : '')
+                    + (game.target === uid ? ' target' : '')
+                    + (game.spinner === uid ? ' spinner' : '');
+                div.style.setProperty('--i', i);
+                div.style.left = x + '%';
+                div.style.top = y + '%';
+
+                const p = profiles[uid];
+                const photo = p && (p.photo_url || p.photo_url2);
+                div.innerHTML =
+                    '<div class="avatar">' + (photo
+                        ? '<img src="' + photo + '" alt="">'
+                        : '👤') + '</div>'
+                    + '<div class="pname">' + nameOf(uid) + '</div>';
+                els.playersLayer.appendChild(div);
+            });
+        }
+
+        let bottleDeg = 0;        // накопичений кут пляшечки
+        let animatedRound = -1;   // яку крутку вже анімуємо
+
+        // Фізика: тертя об стіл (рівносповільнене обертання) + перекрут і хитання на фініші.
+        // Формула детермінована — всі гравці бачать однакову анімацію.
+        function bottleAngleAt(p, startDeg, totalDeg) {
+            const spin = 1 - Math.pow(1 - p, 2);          // постійне гальмування
+            let wobble = 0;
+            if (p > 0.75) {                               // фінальне хитання ±8°, гасне
+                const q = (p - 0.75) / 0.25;
+                wobble = Math.sin(q * Math.PI * 2.5) * (1 - q) * 8;
+            }
+            return startDeg + totalDeg * spin + wobble;
+        }
+
+        // Іскри при зупинці пляшечки
+        function sparkles() {
+            for (let i = 0; i < 12; i++) {
+                const s = document.createElement('span');
+                s.className = 'spark';
+                s.textContent = Math.random() < 0.5 ? '✦' : '✨';
+                const ang = Math.random() * Math.PI * 2;
+                const dist = 70 + Math.random() * 55;
+                s.style.setProperty('--tx', Math.cos(ang) * dist + 'px');
+                s.style.setProperty('--ty', Math.sin(ang) * dist + 'px');
+                els.arena.appendChild(s);
+                setTimeout(function () { s.remove(); }, 900);
             }
         }
 
-        for (let i = 0; i < 2; i++) {
-            const slot = document.getElementById('slot' + i);
-            const pick = document.getElementById('pick' + i);
-            const rm = document.getElementById('rm' + i);
-
-            slot.addEventListener('click', function (e) {
-                if (e.target === rm) return;
-                pick.click();
-            });
-
-            pick.addEventListener('change', async function () {
-                const file = this.files[0];
-                this.value = '';
-                if (!file) return;
-                if (!file.type.startsWith('image/')) return showError('Можна додавати лише зображення 📷');
-                photos[i] = await prepareImage(file);
-                showPreview(i, URL.createObjectURL(photos[i]));
-                errorBox.style.display = 'none';
-            });
-
-            rm.addEventListener('click', function () { clearSlot(i); });
-        }
-
-        async function uploadPhoto(index) {
-            const blob = photos[index];
-            if (!blob) return null;
-            const path = 'users/' + tgUser.id + '/' + Date.now() + '_' + index + '.jpg';
-            const { error } = await sb.storage.from(BUCKET).upload(path, blob, {
-                contentType: 'image/jpeg'
-            });
-            if (error) throw error;
-            const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
-            return data.publicUrl;
-        }
-
-        // === Завантаження існуючої анкети ===
-        async function loadMyProfile() {
-            const { data: me, error } = await sb.from('users')
-                .select('*').eq('user_id', tgUser.id).maybeSingle();
-            if (error || !me) return;
-
-            if (me.first_name) document.getElementById('fName').value = me.first_name;
-            if (me.age) document.getElementById('fAge').value = me.age;
-            if (me.city) document.getElementById('fCity').value = me.city;
-            if (me.bio) {
-                document.getElementById('fBio').value = me.bio;
-                document.getElementById('bioCounter').textContent = me.bio.length;
+        function animateBottle(fromDeg, toDeg, durationMs) {
+            const t0 = performance.now();
+            function frame(now) {
+                const p = Math.min(1, (now - t0) / durationMs);
+                const a = bottleAngleAt(p, fromDeg, toDeg - fromDeg);
+                // Лише transform — композитор GPU, без фільтрів (щоб не підвисало на телефонах)
+                els.bottle.style.transform = 'rotate(' + a + 'deg)';
+                if (p < 1) {
+                    requestAnimationFrame(frame);
+                } else {
+                    sparkles();
+                }
             }
-            document.getElementById('fShowUsername').checked = me.show_username !== false;
-            existingPhotos = [me.photo_url || null, me.photo_url2 || null];
-            existingPhotos.forEach(function (url, i) { if (url) showPreview(i, url); });
+            requestAnimationFrame(frame);
         }
 
-        if (!tgUser) {
-            document.getElementById('formCard').style.display = 'none';
-            showError('Ця сторінка працює лише всередині Telegram. Відкрий бота і натисни 💫');
-        } else {
-            document.getElementById('fName').value = tgUser.first_name || '';
-            loadMyProfile();
+        function pointBottle(targetIdx, count, round) {
+            // Точний напрямок на гравця: гравець i стоїть на куті (i/count)*360
+            const target = (targetIdx / count) * 360 + 90;
+            const current = ((bottleDeg % 360) + 360) % 360;
+            let delta = target - current;
+            if (delta <= 0) delta += 360; // рухаємось лише вперед по колу
+            // 2 чи 3 повних прокрути — псевдовипадково, але однаково в усіх гравців
+            const turns = 2 + ((round + targetIdx) % 2);
+            const newDeg = bottleDeg + turns * 360 + delta;
+
+            if (animatedRound !== round) {
+                animatedRound = round;
+                animateBottle(bottleDeg, newDeg, 3600);
+            }
+            bottleDeg = newDeg;
         }
 
-        document.getElementById('fBio').addEventListener('input', function () {
-            document.getElementById('bioCounter').textContent = this.value.length;
-        });
+        // === Дії гравця ===
+        els.spinBtn.addEventListener('click', async function () {
+            if (!game || game.status !== 'waiting' || game.players.length < 2) return;
+            const others = game.players.filter(function (u) { return u !== tgUser.id; });
+            const target = others[Math.floor(Math.random() * others.length)];
 
-        saveBtn.addEventListener('click', async function () {
-            errorBox.style.display = 'none';
-
-            const name = document.getElementById('fName').value.trim();
-            const age = parseInt(document.getElementById('fAge').value, 10);
-            const city = document.getElementById('fCity').value.trim();
-            const bio = document.getElementById('fBio').value.trim();
-
-            if (!name) return showError('Вкажи імʼя 🙂');
-            if (!age || age < 16 || age > 99) return showError('Вік має бути від 16 до 99');
-
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Зберігаю... ⏳';
-
+            els.spinBtn.disabled = true;
             try {
-                let photoUrl, photoUrl2;
-                if (photos[0] || photos[1]) saveBtn.textContent = 'Завантажую фото... 📷';
-                photoUrl = photos[0] ? await uploadPhoto(0) : existingPhotos[0];
-                photoUrl2 = photos[1] ? await uploadPhoto(1) : existingPhotos[1];
-
-                saveBtn.textContent = 'Зберігаю... ⏳';
-                const { error } = await sb.from('users').upsert({
-                    user_id: tgUser.id,
-                    username: tgUser.username || null,
-                    first_name: name,
-                    age: age,
-                    city: city || null,
-                    bio: bio || null,
-                    photo_url: photoUrl,
-                    photo_url2: photoUrl2,
-                    show_username: document.getElementById('fShowUsername').checked
-                }, { onConflict: 'user_id' });
-
-                if (error) throw error;
-
-                try { tg?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
-
-                document.getElementById('formCard').style.display = 'none';
-                document.getElementById('successScreen').style.display = 'block';
+                await sb.from('bottle_games').update({
+                    status: 'spinning',
+                    spinner: tgUser.id,
+                    target: target,
+                    action: null,
+                    round: game.round + 1
+                }).eq('id', game.id);
+                pollNow();
             } catch (err) {
                 console.error(err);
-                try { tg?.HapticFeedback?.notificationOccurred('error'); } catch (e) {}
-                showError('Не вдалося зберегти анкету 😔 Спробуй ще раз');
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'Зберегти анкету 💾';
+                els.spinBtn.disabled = false;
             }
+        });
+
+        els.actions.querySelectorAll('button').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                if (!game || game.status !== 'spinning' || game.spinner !== tgUser.id) return;
+                const act = btn.dataset.act;
+                els.actions.style.display = 'none';
+                try {
+                    await sb.from('bottle_games').update({
+                        status: 'result',
+                        action: act
+                    }).eq('id', game.id).eq('status', 'spinning');
+                    pollNow();
+                } catch (err) {
+                    console.error(err);
+                }
+            });
+        });
+
+        els.leaveBtn.addEventListener('click', async function () {
+            if (!game) return;
+            const players = game.players.filter(function (u) { return u !== tgUser.id; });
+            const patch = players.length === 0
+                ? { status: 'finished', players: players }
+                : { players: players };
+            if (game.spinner === tgUser.id || game.target === tgUser.id) {
+                patch.status = players.length >= 2 ? 'waiting' : (players.length === 0 ? 'finished' : 'waiting');
+                patch.spinner = null;
+                patch.target = null;
+                patch.action = null;
+            }
+            await sb.from('bottle_games').update(patch).eq('id', game.id);
+            window.location.href = 'index.html';
+        });
+
+        // === Головний рендер стану ===
+        function render() {
+            show(els.gameWrap);
+            renderPlayers();
+
+            const count = game.players.length;
+            els.spinBtn.style.display = 'none';
+            els.spinBtn.classList.remove('ready');
+            els.actions.style.display = 'none';
+            els.banner.classList.remove('shown');
+
+            if (game.status === 'waiting') {
+                if (count < 2) {
+                    els.statusLine.textContent = 'Чекаємо ще гравців... (' + count + '/' + MAX_PLAYERS + ')';
+                    els.spinBtn.style.display = 'block';
+                    els.spinBtn.disabled = true;
+                    els.spinBtn.textContent = '⏳ Чекаємо гравців (потрібно 2+)';
+                } else {
+                    els.statusLine.textContent = 'Гравців: ' + count + '/' + MAX_PLAYERS + '. Крутить: ' + nameOf(game.spinner || game.players[0]);
+                    els.spinBtn.style.display = 'block';
+                    const myTurn = !(game.spinner && game.spinner !== tgUser.id);
+                    els.spinBtn.disabled = !myTurn;
+                    els.spinBtn.textContent = myTurn ? '🍾 Крутити!' : '⏳ ' + nameOf(game.spinner) + ' крутить...';
+                    if (myTurn) els.spinBtn.classList.add('ready');
+                }
+            }
+
+            if (game.status === 'spinning' || game.status === 'result') {
+                const tIdx = game.players.indexOf(game.target);
+                if (tIdx >= 0) pointBottle(tIdx, count, game.round);
+
+                if (game.status === 'spinning') {
+                    if (game.spinner === tgUser.id) {
+                        els.statusLine.textContent = 'Пляшечка вказала на ' + nameOf(game.target) + '! Обери дію:';
+                        els.actions.style.display = 'flex';
+                    } else {
+                        els.statusLine.textContent = nameOf(game.spinner) + ' обирає дію для ' + nameOf(game.target) + '...';
+                    }
+                }
+
+                if (game.status === 'result' && game.action) {
+                    const text = ACTION_TEXT[game.action]
+                        .replace('{a}', nameOf(game.spinner))
+                        .replace('{b}', nameOf(game.target));
+                    els.banner.textContent = text;
+                    els.banner.classList.add('shown');
+                    els.statusLine.textContent = 'Наступним крутить: ' + nameOf(game.target);
+                    try { tg?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
+
+                    // Через 5 сек хід переходить до цілі (робить клієнт цілі, або будь-хто)
+                    setTimeout(async function () {
+                        await sb.from('bottle_games').update({
+                            status: 'waiting',
+                            spinner: game.target,
+                            target: null,
+                            action: null
+                        }).eq('id', game.id).eq('status', 'result');
+                    }, 5000);
+                }
+            }
+        }
+
+        // === Опитування стану гри ===
+        async function fetchGame() {
+            const res = await sb.from('bottle_games')
+                .select('*').neq('status', 'finished')
+                .order('id', { ascending: false }).limit(1).maybeSingle();
+
+            if (res.error) throw res.error;
+            game = res.data;
+            if (!game) {
+                // Активної гри нема — створюємо
+                const created = await sb.from('bottle_games').insert({
+                    host_id: tgUser.id,
+                    players: [tgUser.id],
+                    status: 'waiting'
+                }).select().maybeSingle();
+                if (created.error) throw created.error;
+                game = created.data;
+            } else if (game.players.indexOf(tgUser.id) === -1) {
+                if (game.players.length >= MAX_PLAYERS) {
+                    show(els.gameFull);
+                    return;
+                }
+                const players = game.players.concat([tgUser.id]);
+                await sb.from('bottle_games').update({ players: players }).eq('id', game.id);
+                game.players = players;
+            }
+
+            // Профілі всіх гравців
+            if (game.players.length) {
+                const pr = await sb.from('users').select('*').in('user_id', game.players);
+                profiles = {};
+                (pr.data || []).forEach(function (p) { profiles[p.user_id] = p; });
+            }
+
+            if (lastRound !== game.round) {
+                lastRound = game.round;
+            }
+            render();
+        }
+
+        // === Серцебиття: показуємо, що ми в грі (для авто-виходу) ===
+        let lastPing = 0;
+
+        async function pingPresence() {
+            if (!game || Date.now() - lastPing < 5000) return; // не частіше, ніж раз на 5 сек
+            lastPing = Date.now();
+            try {
+                await sb.from('bottle_presence').upsert({
+                    user_id: tgUser.id,
+                    game_id: game.id,
+                    seen_at: new Date().toISOString()
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Миттєвий вихід при закритті вікна (якщо пристрій дозволяє)
+        window.addEventListener('pagehide', function () {
+            if (!tgUser || !game) return;
+            try {
+                fetch(SUPABASE_URL + '/rest/v1/bottle_presence?user_id=eq.' + tgUser.id, {
+                    method: 'DELETE',
+                    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY },
+                    keepalive: true
+                });
+            } catch (e) {}
+        });
+
+        async function pollNow() {
+            try {
+                await fetchGame();
+                await pingPresence();
+            } catch (err) {
+                console.error(err);
+                var msg = (err && err.message) ? err.message : String(err);
+                if (err && err.code) msg += ' [code ' + err.code + ']';
+                els.statusLine.textContent = '⚠️ ' + msg;
+            }
+        }
+
+        async function init() {
+            if (!tgUser) {
+                show(els.needRegister);
+                return;
+            }
+            const { data: my } = await sb.from('users')
+                .select('user_id').eq('user_id', tgUser.id).maybeSingle();
+            if (!my) {
+                show(els.needRegister);
+                return;
+            }
+            show(els.loading);
+            await pollNow();
+            setInterval(pollNow, POLL_MS);
+        }
+
+        show(els.loading);
+        init().catch(function (err) {
+            console.error(err);
+            var msg = (err && err.message) ? err.message : String(err);
+            els.statusLine.textContent = '⚠️ ' + msg;
         });
     </script>
 </body>
