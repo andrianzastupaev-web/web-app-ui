@@ -7,95 +7,61 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; touch-action: manipulation; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; touch-action: manipulation; }
 
         body {
             min-height: 100vh;
-            background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #2d1b4e 100%);
+            background: #15151f;
             color: #fff;
-            padding: 18px 16px calc(96px + env(safe-area-inset-bottom));
-                    animation: pageIn .35s ease;
+            padding: 16px 16px calc(88px + env(safe-area-inset-bottom));
+            overflow-x: hidden;
         }
-        @keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* М'яке світіння на фоні (статичне) */
-        .orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-        .orbs i { position: absolute; border-radius: 50%; filter: blur(50px); opacity: 0.22; }
-        .orbs i:nth-child(1) { width: 180px; height: 180px; background: #e94e77; top: 8%; left: -60px; }
-        .orbs i:nth-child(2) { width: 220px; height: 220px; background: #8e44ad; bottom: 12%; right: -80px; }
-        body > *:not(.orbs):not(.bottom-nav) { position: relative; z-index: 1; }
-        .bottom-nav { z-index: 10; }
-        .placeholder .cta { box-shadow: 0 10px 24px rgba(233, 78, 119, 0.35); }
-
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .topbar h1 {
-            font-size: 21px; font-weight: 800;
-            background: linear-gradient(90deg, #ffd166, #ff7eb3, #7bdff2);
-            -webkit-background-clip: text; background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .topbar a.back { color: #fff; opacity: 0.7; text-decoration: none; font-size: 14px; font-weight: 600; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .topbar a.back { color: #8a8aa0; text-decoration: none; font-size: 13px; }
 
         .card {
-            background: rgba(255, 255, 255, 0.07);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 20px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
+            background: #1d1d2e;
+            border-radius: 16px;
+            padding: 16px;
         }
 
-        .field { margin-bottom: 16px; }
-        .field label { display: block; font-size: 13px; font-weight: 600; opacity: 0.8; margin-bottom: 6px; }
+        .field { margin-bottom: 14px; }
+        .field label { display: block; font-size: 13px; font-weight: 600; color: #a8a8bd; margin-bottom: 5px; }
         .field input, .field textarea {
             width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(0, 0, 0, 0.25);
+            padding: 11px 13px;
+            border-radius: 10px;
+            border: 1px solid #33334a;
+            background: #15151f;
             color: #fff;
             font-size: 15px;
             outline: none;
-            transition: border-color 0.2s;
         }
-        .field input:focus, .field textarea:focus { border-color: #e94e77; }
-        .field textarea { resize: vertical; min-height: 88px; }
-        .field .hint { font-size: 11px; opacity: 0.45; margin-top: 4px; }
+        .field input:focus, .field textarea:focus { border-color: #7c3aed; }
+        .field textarea { resize: vertical; min-height: 80px; }
+        .field .hint { font-size: 11px; color: #6d6d84; margin-top: 3px; }
 
-        .switch-row { display: flex; justify-content: space-between; align-items: center; }
-        .switch-row label:first-child { font-size: 13px; font-weight: 600; opacity: 0.8; }
-        .switch { position: relative; width: 52px; height: 30px; flex-shrink: 0; display: inline-block; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .switch .slider {
-            position: absolute; inset: 0; border-radius: 999px;
-            background: rgba(255, 255, 255, 0.15); transition: 0.25s; cursor: pointer;
-        }
-        .switch .slider:before {
-            content: ''; position: absolute; width: 24px; height: 24px; border-radius: 50%;
-            background: #fff; top: 3px; left: 3px; transition: 0.25s;
-        }
-        .switch input:checked + .slider { background: linear-gradient(90deg, #e94e77, #b83060); }
-        .switch input:checked + .slider:before { transform: translateX(22px); }
-
-        .row { display: flex; gap: 12px; }
+        .row { display: flex; gap: 10px; }
         .row .field { flex: 1; }
 
-        .photos-row { display: flex; gap: 12px; }
+        .photos-row { display: flex; gap: 10px; }
         .photo-slot {
             position: relative;
             flex: 1;
             aspect-ratio: 3/4;
-            border-radius: 14px;
-            border: 1.5px dashed rgba(255, 255, 255, 0.3);
-            background: rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
+            border: 2px dashed #3a3a55;
+            background: #15151f;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
             cursor: pointer;
-            transition: border-color 0.2s;
         }
-        .photo-slot.filled { border-style: solid; border-color: #e94e77; }
-        .photo-slot .plus { font-size: 34px; opacity: 0.4; }
+        .photo-slot.filled { border-style: solid; border-color: #7c3aed; }
+        .photo-slot .plus { font-size: 30px; color: #4a4a68; }
         .photo-slot img {
             position: absolute;
             inset: 0;
@@ -106,15 +72,13 @@
         }
         .photo-slot .remove {
             position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 26px;
-            height: 26px;
+            top: 5px; right: 5px;
+            width: 26px; height: 26px;
             border-radius: 50%;
             border: none;
-            background: rgba(0, 0, 0, 0.65);
+            background: rgba(0, 0, 0, 0.7);
             color: #fff;
-            font-size: 15px;
+            font-size: 14px;
             line-height: 1;
             display: none;
             cursor: pointer;
@@ -122,81 +86,80 @@
 
         .btn {
             width: 100%;
-            padding: 15px;
-            margin-top: 8px;
+            padding: 14px;
+            margin-top: 6px;
             border: none;
-            border-radius: 14px;
-            background: linear-gradient(90deg, #e94e77, #b83060);
+            border-radius: 12px;
+            background: #7c3aed;
             color: #fff;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             cursor: pointer;
-            transition: opacity 0.2s;
         }
-        .btn:disabled { opacity: 0.5; cursor: wait; }
+        .btn:disabled { opacity: 0.5; }
+
+        .switch-row { display: flex; justify-content: space-between; align-items: center; }
+        .switch-row label:first-child { font-size: 13px; font-weight: 600; color: #a8a8bd; }
+        .switch { position: relative; width: 48px; height: 28px; flex-shrink: 0; display: inline-block; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch .slider {
+            position: absolute; inset: 0; border-radius: 999px;
+            background: #33334a; cursor: pointer;
+        }
+        .switch .slider:before {
+            content: ''; position: absolute; width: 22px; height: 22px; border-radius: 50%;
+            background: #fff; top: 3px; left: 3px;
+        }
+        .switch input:checked + .slider { background: #7c3aed; }
+        .switch input:checked + .slider:before { transform: translateX(20px); }
 
         .error-box {
             display: none;
-            background: rgba(233, 78, 119, 0.15);
-            border: 1px solid rgba(233, 78, 119, 0.5);
-            border-radius: 12px;
-            padding: 12px 14px;
+            background: #3d1520;
+            border: 1px solid #7c2d44;
+            border-radius: 10px;
+            padding: 10px 13px;
             font-size: 13px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .success-screen { display: none; text-align: center; padding: 40px 10px; }
-        .success-screen .emoji { font-size: 56px; }
-        .success-screen h2 { font-size: 20px; margin: 16px 0 8px; }
-        .success-screen p { font-size: 14px; opacity: 0.7; line-height: 1.5; }
+        .success-screen .emoji { font-size: 52px; }
+        .success-screen h2 { font-size: 18px; margin: 12px 0 6px; }
+        .success-screen p { font-size: 13px; color: #8a8aa0; }
         .success-screen .cta {
             display: inline-block;
-            margin-top: 18px;
-            padding: 14px 28px;
-            border-radius: 14px;
-            background: linear-gradient(90deg, #8e44ad, #5b2c8d);
+            margin-top: 14px;
+            padding: 13px 26px;
+            border-radius: 12px;
+            background: #7c3aed;
             color: #fff;
             font-weight: 700;
             text-decoration: none;
-        }
-        .success-screen .cta.secondary {
-            display: block;
-            margin: 12px auto 0;
-            background: none;
-            border: 1px solid rgba(255, 255, 255, 0.25);
         }
 
         .bottom-nav {
             position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            left: 0; right: 0; bottom: 0;
             display: flex;
             justify-content: space-between;
-            padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
-            background: rgba(15, 15, 30, 0.85);
-            backdrop-filter: blur(12px);
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+            background: #101018;
+            border-top: 1px solid #26263a;
+            z-index: 10;
         }
         .bottom-nav a {
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
             text-decoration: none;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            transition: transform 0.15s, background 0.15s;
+            background: #1d1d2e;
         }
-        .bottom-nav a:active { transform: scale(0.9); }
+        .bottom-nav a.current { background: #35355a; }
     </style>
 </head>
 <body>
-    <div class="orbs"><i></i><i></i></div>
-
     <div class="topbar">
         <h1>✏️ Редагування анкети</h1>
         <a class="back" href="index.html">← Мій профіль</a>
@@ -236,17 +199,7 @@
             </div>
             <div class="field">
                 <label for="fCity">Місто</label>
-                <input id="fCity" type="text" maxlength="40" list="cities" placeholder="Київ">
-                <datalist id="cities">
-                    <option value="Київ"></option>
-                    <option value="Львів"></option>
-                    <option value="Харків"></option>
-                    <option value="Одеса"></option>
-                    <option value="Дніпро"></option>
-                    <option value="Вінниця"></option>
-                    <option value="Запоріжжя"></option>
-                    <option value="Полтава"></option>
-                </datalist>
+                <input id="fCity" type="text" maxlength="40" placeholder="Київ">
             </div>
         </div>
 
@@ -274,13 +227,12 @@
         <div class="emoji">✅</div>
         <h2>Анкету збережено!</h2>
         <p>Твої дані оновлено</p>
-        <a class="cta" href="search.html?v=6">🔍 Дивитися анкети</a>
-        <a class="cta secondary" href="index.html">👤 Мій профіль</a>
+        <a class="cta" href="search.html?v=7">🔍 Дивитися анкети</a>
     </div>
 
     <nav class="bottom-nav">
-        <a href="search.html?v=6" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=21" title="Пляшечка">🍾</a>
+        <a href="search.html?v=7" title="Пошук анкет">🔍</a>
+        <a href="bottle.html?v=23" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -307,7 +259,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // === Фото: нові вибрані (Blob) + збережені раніше (URL) ===
         const photos = [null, null];
         let existingPhotos = [null, null];
 
@@ -382,7 +333,6 @@
             return data.publicUrl;
         }
 
-        // === Завантаження існуючої анкети ===
         async function loadMyProfile() {
             const { data: me, error } = await sb.from('users')
                 .select('*').eq('user_id', tgUser.id).maybeSingle();
