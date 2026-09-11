@@ -7,293 +7,157 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; touch-action: manipulation; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; touch-action: manipulation; }
 
         body {
             min-height: 100vh;
-            background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #2d1b4e 100%);
+            background: #15151f;
             color: #fff;
-            padding: 18px 16px calc(112px + env(safe-area-inset-bottom));
-                    animation: pageIn .35s ease;
-        }
-        @keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* М'яке світіння на фоні (статичне) */
-        .orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-        .orbs i { position: absolute; border-radius: 50%; filter: blur(50px); opacity: 0.22; }
-        .orbs i:nth-child(1) { width: 180px; height: 180px; background: #e94e77; top: 8%; left: -60px; }
-        .orbs i:nth-child(2) { width: 220px; height: 220px; background: #8e44ad; bottom: 12%; right: -80px; }
-        body > *:not(.orbs):not(.bottom-nav) { position: relative; z-index: 1; }
-        .bottom-nav { z-index: 10; }
-        .placeholder .cta { box-shadow: 0 10px 24px rgba(233, 78, 119, 0.35); }
-
-        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-        .topbar h1 {
-            font-size: 21px; font-weight: 800; letter-spacing: 0.2px;
-            background: linear-gradient(90deg, #ffd166, #ff7eb3, #7bdff2);
-            -webkit-background-clip: text; background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .topbar a.back {
-            color: #fff;
-            opacity: 0.7;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
+            padding: 16px 16px calc(88px + env(safe-area-inset-bottom));
+            overflow-x: hidden;
         }
 
-        .placeholder { text-align: center; padding: 70px 16px; display: none; }
-        .placeholder .emoji { font-size: 58px; }
-        .placeholder h2 { font-size: 19px; margin: 16px 0 8px; }
-        .placeholder p { font-size: 14px; opacity: 0.65; line-height: 1.55; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .topbar h1 { font-size: 18px; font-weight: 700; }
+        .topbar a.back { color: #8a8aa0; text-decoration: none; font-size: 13px; }
+
+        .placeholder { text-align: center; padding: 60px 16px; display: none; }
+        .placeholder .emoji { font-size: 48px; }
+        .placeholder h2 { font-size: 17px; margin: 12px 0 6px; }
+        .placeholder p { font-size: 13px; color: #8a8aa0; line-height: 1.5; }
         .placeholder .cta {
             display: inline-block;
-            margin-top: 20px;
-            padding: 14px 28px;
-            border-radius: 14px;
-            background: linear-gradient(90deg, #e94e77, #b83060);
+            margin-top: 16px;
+            padding: 13px 26px;
+            border-radius: 12px;
+            background: #7c3aed;
             color: #fff;
             font-weight: 700;
             text-decoration: none;
         }
 
-        /* Стек карток: наступна ледь видна позаду */
-        .card-stack { position: relative; }
+        /* Картка анкети */
         .profile-card {
             position: relative;
-            border-radius: 24px;
+            border-radius: 16px;
             overflow: hidden;
-            background: #20203a;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+            background: #1d1d2e;
         }
-        .profile-card.back {
-            position: absolute;
-            inset: 0;
-            transform: scale(0.94) translateY(14px);
-            opacity: 0.45;
-            pointer-events: none;
-        }
-        .profile-card.back img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .profile-card.front { z-index: 2; transition: transform 0.32s ease, opacity 0.32s ease; }
-
         .photo-area { position: relative; width: 100%; aspect-ratio: 3/4; }
-        .photo-area .photo {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
+        .photo-area .photo { width: 100%; height: 100%; object-fit: cover; display: block; }
         .photo-area .photo-fallback {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 96px;
-            background: linear-gradient(160deg, #e94e77, #8e44ad);
+            width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 80px;
+            background: #2a2a40;
         }
-
-        /* Крапки-перемикачі фото */
-        .photo-dots {
-            position: absolute;
-            top: 12px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: center;
-            gap: 6px;
-        }
-        .photo-dots span {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.45);
-            transition: background 0.2s, transform 0.2s;
-        }
-        .photo-dots span.active { background: #fff; transform: scale(1.15); }
-
         .badge {
-            position: absolute;
-            top: 14px;
-            left: 14px;
-            padding: 7px 13px;
-            border-radius: 999px;
-            background: rgba(0, 0, 0, 0.5);
-            font-size: 12px;
-            font-weight: 600;
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: absolute; top: 10px; left: 10px;
+            padding: 5px 11px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            font-size: 12px; font-weight: 600;
         }
-
-        /* Інформація поверх фото, на градієнті */
         .overlay {
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            padding: 56px 18px 18px;
-            background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.55) 45%, rgba(0, 0, 0, 0.82) 100%);
+            position: absolute; left: 0; right: 0; bottom: 0;
+            padding: 48px 14px 14px;
+            background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%);
         }
-        .overlay .name { font-size: 24px; font-weight: 800; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); }
-        .overlay .meta {
-            font-size: 14px;
-            font-weight: 500;
-            opacity: 0.9;
-            margin-top: 3px;
-            text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
-        }
-        .overlay .bio {
-            font-size: 13.5px;
-            line-height: 1.5;
-            font-style: italic;
-            opacity: 0.85;
-            margin-top: 9px;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+        .overlay .name { font-size: 21px; font-weight: 700; }
+        .overlay .meta { font-size: 13px; color: #cfcfdd; margin-top: 2px; }
+        .overlay .bio { font-size: 13px; color: #d8d8e4; line-height: 1.45; margin-top: 7px; }
 
-        /* Кнопки дій */
-        .actions { display: flex; justify-content: center; align-items: center; gap: 30px; margin-top: 20px; }
+        /* Кнопки дій — прості й великі */
+        .actions { display: flex; justify-content: center; gap: 16px; margin-top: 14px; }
         .actions button {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
+            width: 74px; height: 74px;
             border: none;
-            font-size: 27px;
+            border-radius: 16px;
+            font-size: 30px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.15s, opacity 0.15s;
         }
-        .actions button:active { transform: scale(0.86); }
         .actions button:disabled { opacity: 0.4; }
-        .btn-dislike {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.18) !important;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-        }
-        .btn-like {
-            background: linear-gradient(135deg, #ff5e8e, #d6336c);
-            box-shadow: 0 10px 26px rgba(214, 51, 108, 0.45);
-        }
+        .btn-dislike { background: #2a2a40; }
+        .btn-like { background: #c0265c; }
 
-        .hint-line {
-            text-align: center;
-            margin-top: 12px;
-            font-size: 12px;
-            opacity: 0.5;
-        }
-
-        /* Анімація вильоту картки */
-        .card-out-left { transform: translateX(-130%) rotate(-16deg) !important; opacity: 0 !important; }
-        .card-out-right { transform: translateX(130%) rotate(16deg) !important; opacity: 0 !important; }
+        .hint-line { text-align: center; margin-top: 8px; font-size: 11px; color: #6d6d84; }
 
         /* Нижнє меню */
         .bottom-nav {
             position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            left: 0; right: 0; bottom: 0;
             display: flex;
             justify-content: space-between;
-            padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
-            background: rgba(15, 15, 30, 0.85);
-            backdrop-filter: blur(12px);
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+            background: #101018;
+            border-top: 1px solid #26263a;
+            z-index: 10;
         }
         .bottom-nav a {
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
             text-decoration: none;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            transition: transform 0.15s, background 0.15s;
+            background: #1d1d2e;
         }
-        .bottom-nav a:active { transform: scale(0.9); }
-        .bottom-nav a.current {
-            background: rgba(233, 78, 119, 0.25);
-            border-color: #e94e77;
-            box-shadow: 0 0 18px rgba(233, 78, 119, 0.35);
-        }
+        .bottom-nav a.current { background: #35355a; }
     </style>
 </head>
 <body>
-    <div class="orbs"><i></i><i></i></div>
-
     <div class="topbar">
         <h1>🔍 Пошук</h1>
-        <a class="back" href="index.html">← Моя анкета</a>
+        <a class="back" href="index.html">← Мій профіль</a>
     </div>
 
-    <!-- Стан: потрібно зареєструватися -->
     <div class="placeholder" id="needRegister">
         <div class="emoji">📝</div>
         <h2>Спочатку — анкета</h2>
-        <p>Заповни свою анкету, щоб почати знайомитися з іншими учасниками</p>
-        <a class="cta" href="index.html">Заповнити анкету</a>
+        <p>Заповни свою анкету, щоб почати знайомитися</p>
+        <a class="cta" href="edit.html?v=5">Заповнити анкету</a>
     </div>
 
-    <!-- Стан: анкет немає -->
-        <div class="placeholder" id="noMore">
-            <div class="emoji">🤷‍♀️</div>
-            <h2>Анкети закінчились</h2>
-            <p>Ти переглянув усі нові анкети. Заглянь пізніше — або подивись ще раз!</p>
-            <a class="cta" href="#" id="showAgain">🔄 Показати ще раз</a>
-            <a class="cta" href="bottle.html?v=21" style="margin-top: 12px;">🍾 Крутити пляшечку</a>
-        </div>
+    <div class="placeholder" id="noMore">
+        <div class="emoji">🤷‍♀️</div>
+        <h2>Анкети закінчились</h2>
+        <p>Ти переглянув усі нові анкети</p>
+        <a class="cta" href="#" id="showAgain">🔄 Показати ще раз</a>
+    </div>
 
-    <!-- Стан: завантаження -->
     <div class="placeholder" id="loading">
         <div class="emoji">⏳</div>
         <h2>Завантажую анкети...</h2>
     </div>
 
-    <!-- Стан: помилка завантаження -->
     <div class="placeholder" id="loadError">
         <div class="emoji">⚠️</div>
         <h2>Не вдалося завантажити</h2>
-        <p>Сталася помилка. Закрий і відкрий додаток ще раз</p>
+        <p>Закрий і відкрий додаток ще раз</p>
     </div>
 
-    <!-- Картки + кнопки -->
     <div id="deckWrap" style="display: none;">
-        <div class="card-stack">
-            <div class="profile-card back" id="cardBack">
-                <img id="cbPhoto" alt="">
-            </div>
-            <div class="profile-card front" id="card">
-                <div class="photo-area" id="photoArea">
-                    <img class="photo" id="cPhoto" alt="">
-                    <div class="photo-fallback" id="cFallback">🙂</div>
-                    <div class="photo-dots" id="cDots"></div>
-                    <span class="badge" id="cBadge"></span>
-                    <div class="overlay">
-                        <div class="name" id="cName"></div>
-                        <div class="meta" id="cMeta"></div>
-                        <div class="bio" id="cBio"></div>
-                    </div>
+        <div class="profile-card">
+            <div class="photo-area" id="photoArea">
+                <img class="photo" id="cPhoto" alt="">
+                <div class="photo-fallback" id="cFallback">🙂</div>
+                <span class="badge" id="cBadge"></span>
+                <div class="overlay">
+                    <div class="name" id="cName"></div>
+                    <div class="meta" id="cMeta"></div>
+                    <div class="bio" id="cBio"></div>
                 </div>
             </div>
         </div>
         <div class="actions">
             <button class="btn-dislike" id="btnDislike" title="Не цікаво">❌</button>
             <button class="btn-like" id="btnLike" title="Сподобалось">❤️</button>
+        </div>
+        <div class="hint-line">❤️ — сподобалось • ❌ — пропустити</div>
+    </div>
 
     <nav class="bottom-nav">
-        <a href="search.html?v=6" class="current" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=21" title="Пляшечка">🍾</a>
+        <a href="search.html?v=7" class="current" title="Пошук анкет">🔍</a>
+        <a href="bottle.html?v=23" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -316,12 +180,8 @@
             needRegister: document.getElementById('needRegister'),
             noMore: document.getElementById('noMore'),
             deckWrap: document.getElementById('deckWrap'),
-            card: document.getElementById('card'),
-            back: document.getElementById('cardBack'),
-            cbPhoto: document.getElementById('cbPhoto'),
             photo: document.getElementById('cPhoto'),
             fallback: document.getElementById('cFallback'),
-            dots: document.getElementById('cDots'),
             photoArea: document.getElementById('photoArea'),
             name: document.getElementById('cName'),
             meta: document.getElementById('cMeta'),
@@ -341,7 +201,7 @@
         let deck = [];
         let pos = 0;
         let busy = false;
-        let photoIdx = 0; // активне фото поточної картки
+        let photoIdx = 0;
 
         function cardPhotos(u) {
             return [u.photo_url, u.photo_url2].filter(Boolean);
@@ -361,29 +221,6 @@
                 els.fallback.style.display = 'flex';
             }
 
-            // Крапки під кількість фото
-            els.dots.innerHTML = '';
-            photos.forEach(function (_, i) {
-                const dot = document.createElement('span');
-                if (i === 0) dot.classList.add('active');
-                els.dots.appendChild(dot);
-            });
-            els.dots.style.display = photos.length > 1 ? 'flex' : 'none';
-
-            // Наступна картка позаду
-            const next = deck[pos + 1];
-            if (next) {
-                const np = cardPhotos(next)[0];
-                if (np) {
-                    els.cbPhoto.src = np;
-                    els.back.style.display = 'block';
-                } else {
-                    els.back.style.display = 'none';
-                }
-            } else {
-                els.back.style.display = 'none';
-            }
-
             els.name.textContent = (u.first_name || 'Учасник') + (u.age ? ', ' + u.age : '');
             els.meta.textContent = u.city ? '📍 ' + u.city : '';
             els.bio.textContent = u.bio ? '“' + u.bio + '”' : '';
@@ -391,47 +228,27 @@
             const showName = u.username && u.show_username !== false;
             els.badge.textContent = showName ? '@' + u.username : '';
             els.badge.style.display = showName ? 'block' : 'none';
-
-            // Наступна картка з'являється миттєво (без зворотної анімації — інакше задвоєння)
-            els.card.style.transition = 'none';
-            els.card.classList.remove('card-out-left', 'card-out-right');
-            void els.card.offsetWidth; // примусове застосування без переходу
-            els.card.style.transition = '';
         }
 
-        // Тап по фото — перемикання між фото учасника
-        els.photoArea.addEventListener('click', function (e) {
-            if (e.target.closest('.overlay a')) return;
+        els.photoArea.addEventListener('click', function () {
             const photos = cardPhotos(deck[pos]);
             if (photos.length < 2) return;
             photoIdx = (photoIdx + 1) % photos.length;
             els.photo.src = photos[photoIdx];
-            els.dots.querySelectorAll('span').forEach(function (d, i) {
-                d.classList.toggle('active', i === photoIdx);
-            });
         });
 
-        async function react(kind) {
+        // Миттєва реакція: тиск → одразу наступна анкета
+        function react(kind) {
             if (busy) return;
             busy = true;
-            els.like.disabled = true;
-            els.dislike.disabled = true;
-
             const target = deck[pos];
-            try {
-                await sb.from('reactions').upsert({
-                    from_user: tgUser.id,
-                    to_user: target.user_id,
-                    kind: kind,
-                    notified: false
-                }, { onConflict: 'from_user,to_user' });
-                try { tg?.HapticFeedback?.notificationOccurred(kind === 'like' ? 'success' : 'warning'); } catch (e) {}
-            } catch (err) {
-                console.error(err);
-            }
-
-            els.card.classList.add(kind === 'like' ? 'card-out-right' : 'card-out-left');
-            await new Promise(r => setTimeout(r, 340));
+            sb.from('reactions').upsert({
+                from_user: tgUser.id,
+                to_user: target.user_id,
+                kind: kind,
+                notified: false
+            }, { onConflict: 'from_user,to_user' }).catch(console.error);
+            try { tg?.HapticFeedback?.notificationOccurred(kind === 'like' ? 'success' : 'warning'); } catch (e) {}
 
             pos += 1;
             if (pos >= deck.length) {
@@ -439,8 +256,6 @@
             } else {
                 renderCard();
             }
-            els.like.disabled = false;
-            els.dislike.disabled = false;
             busy = false;
         }
 
@@ -448,7 +263,6 @@
         els.dislike.addEventListener('click', function () { react('dislike'); });
 
         async function loadDeck(showRatedAgain) {
-            // Кого я вже оцінив — не показуємо повторно (окрім режиму «ще раз»)
             const rated = await sb.from('reactions')
                 .select('to_user').eq('from_user', tgUser.id);
             const seen = new Set((rated.data || []).map(function (r) { return r.to_user; }));
@@ -476,7 +290,6 @@
                 return;
             }
 
-            // Чи заповнена моя анкета?
             const { data: me } = await sb.from('users')
                 .select('user_id').eq('user_id', tgUser.id).maybeSingle();
             if (!me) {
@@ -487,8 +300,8 @@
             await loadDeck(false);
         }
 
-        // «Показати ще раз» — нове коло перегляду всіх анкет
-        document.getElementById('showAgain').addEventListener('click', async function () {
+        document.getElementById('showAgain').addEventListener('click', async function (e) {
+            e.preventDefault();
             show(els.loading);
             try {
                 await loadDeck(true);
