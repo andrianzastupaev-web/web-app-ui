@@ -9,18 +9,15 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 
-        html, body { height: 100%; }
-
+        /* Тіло сторінки — таке саме, як у профілі: звичайна сторінка без закріплень */
         body {
+            min-height: 100vh;
             background: linear-gradient(150deg, #12101f 0%, #1c1440 40%, #2b1050 70%, #1a1038 100%);
             color: #fff;
             padding: 18px 16px calc(112px + env(safe-area-inset-bottom));
             -webkit-tap-highlight-color: transparent;
-            /* Сторінка гри зафіксована: жодних прокруток і гумових стрибків */
-            position: fixed;
-            inset: 0;
-            overflow: hidden auto;      /* всередині — лише якщо контент вищий за екран */
-            overscroll-behavior: none;  /* без «гумового» відскоку */
+            overflow-x: hidden;
+            overscroll-behavior-y: none; /* без «гумового» відскоку */
             animation: pageIn .35s ease;
         }
         @keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
@@ -85,7 +82,7 @@
             position: relative;
             width: 100%;
             max-width: 420px;
-            max-width: min(420px, 100%, 56dvh); /* стискається на низьких екранах — усе вміщається без прокрутки */
+            max-width: min(420px, 100%, 48dvh); /* стискається на низьких екранах — усе вміщається без прокрутки */
             aspect-ratio: 1/1;
             margin: 0 auto;
         }
@@ -242,8 +239,8 @@
             display: block;
             width: 100%;
             max-width: 420px;
-            margin: 18px auto 0;
-            padding: 16px;
+            margin: 12px auto 0;
+            padding: 15px;
             border: none;
             border-radius: 16px;
             background: linear-gradient(100deg, #8e44ad, #6d34a0);
@@ -296,8 +293,8 @@
             display: block;
             width: 100%;
             max-width: 420px;
-            margin: 12px auto 0;
-            padding: 12px;
+            margin: 8px auto 0;
+            padding: 10px;
             border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 14px;
             background: none;
@@ -311,9 +308,9 @@
         .action-banner {
             visibility: hidden;
             max-width: 420px;
-            margin: 16px auto 0;
-            padding: 16px;
-            min-height: 56px;
+            margin: 10px auto 0;
+            padding: 12px;
+            min-height: 46px;
             border-radius: 18px;
             background: linear-gradient(120deg, rgba(255, 209, 102, 0.16), rgba(233, 78, 119, 0.14));
             border: 1px solid rgba(255, 209, 102, 0.45);
@@ -451,7 +448,7 @@
 
     <nav class="bottom-nav">
         <a href="search.html?v=6" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=15" class="current" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=16" class="current" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
