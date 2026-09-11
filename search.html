@@ -152,9 +152,8 @@
             <button class="btn-dislike" id="btnDislike" title="Не цікаво">❌</button>
             <button class="btn-like" id="btnLike" title="Сподобалось">❤️</button>
         </div>
-
     <nav class="bottom-nav">
-        <a href="search.html?v=7" class="current" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=8" class="current" title="Пошук анкет">🔍</a>
         <a href="bottle.html?v=23" title="Пляшечка">🍾</a>
     </nav>
 
@@ -239,13 +238,13 @@
         function react(kind) {
             if (busy) return;
             busy = true;
-            const target = deck[pos];
+            const current = deck[pos];
             sb.from('reactions').upsert({
                 from_user: tgUser.id,
-                to_user: target.user_id,
+                to_user: current.user_id,
                 kind: kind,
                 notified: false
-            }, { onConflict: 'from_user,to_user' }).catch(console.error);
+            }, { onConflict: 'from_user,to_user' }).then(function () {}, console.error);
             try { tg?.HapticFeedback?.notificationOccurred(kind === 'like' ? 'success' : 'warning'); } catch (e) {}
 
             pos += 1;
