@@ -14,11 +14,26 @@
             background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #2d1b4e 100%);
             color: #fff;
             padding: 18px 16px calc(96px + env(safe-area-inset-bottom));
-            -webkit-tap-highlight-color: transparent;
+                    animation: pageIn .35s ease;
         }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+        /* М'яке світіння на фоні (статичне) */
+        .orbs { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+        .orbs i { position: absolute; border-radius: 50%; filter: blur(50px); opacity: 0.22; }
+        .orbs i:nth-child(1) { width: 180px; height: 180px; background: #e94e77; top: 8%; left: -60px; }
+        .orbs i:nth-child(2) { width: 220px; height: 220px; background: #8e44ad; bottom: 12%; right: -80px; }
+        body > *:not(.orbs):not(.bottom-nav) { position: relative; z-index: 1; }
+        .bottom-nav { z-index: 10; }
+        .placeholder .cta { box-shadow: 0 10px 24px rgba(233, 78, 119, 0.35); }
 
         .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .topbar h1 { font-size: 20px; font-weight: 700; }
+        .topbar h1 {
+            font-size: 21px; font-weight: 800;
+            background: linear-gradient(90deg, #ffd166, #ff7eb3, #7bdff2);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
         .topbar a.back { color: #fff; opacity: 0.7; text-decoration: none; font-size: 14px; font-weight: 600; }
 
         .card {
@@ -180,6 +195,8 @@
     </style>
 </head>
 <body>
+    <div class="orbs"><i></i><i></i></div>
+
     <div class="topbar">
         <h1>✏️ Редагування анкети</h1>
         <a class="back" href="index.html">← Мій профіль</a>
@@ -257,13 +274,13 @@
         <div class="emoji">✅</div>
         <h2>Анкету збережено!</h2>
         <p>Твої дані оновлено</p>
-        <a class="cta" href="search.html?v=4">🔍 Дивитися анкети</a>
+        <a class="cta" href="search.html?v=5">🔍 Дивитися анкети</a>
         <a class="cta secondary" href="index.html">👤 Мій профіль</a>
     </div>
 
     <nav class="bottom-nav">
-        <a href="search.html?v=4" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=9" title="Пляшечка">🍾</a>
+        <a href="search.html?v=5" title="Пошук анкет">🔍</a>
+        <a href="bottle.html?v=13" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
