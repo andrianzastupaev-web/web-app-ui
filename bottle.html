@@ -12,16 +12,10 @@
         body {
             min-height: 100vh;
             background: linear-gradient(150deg, #12101f 0%, #1c1440 40%, #2b1050 70%, #1a1038 100%);
-            background-size: 200% 200%;
-            animation: bgShift 16s ease-in-out infinite;
             color: #fff;
             padding: 18px 16px calc(112px + env(safe-area-inset-bottom));
             -webkit-tap-highlight-color: transparent;
             overflow-x: hidden;
-        }
-        @keyframes bgShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
         }
 
         /* Світні кулі на фоні */
@@ -129,9 +123,9 @@
         /* === Гравці === */
         .player {
             position: absolute;
-            width: 74px;
-            margin-left: -37px;
-            margin-top: -37px;
+            width: 92px;
+            margin-left: -46px;
+            margin-top: -46px;
             text-align: center;
             z-index: 3;
             animation: popIn .5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
@@ -143,16 +137,17 @@
         }
         .player .avatar {
             position: relative;
-            width: 62px;
-            height: 62px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2.5px solid rgba(255, 255, 255, 0.35);
+            border: 3px solid rgba(255, 255, 255, 0.4);
             background: linear-gradient(160deg, #e94e77, #8e44ad);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 26px;
+            font-size: 32px;
+            font-weight: 700;
             margin: 0 auto;
             overflow: visible;
         }
@@ -164,14 +159,14 @@
         }
         .player .pname {
             display: table;
-            margin: 5px auto 0;
-            padding: 3px 10px;
+            margin: 6px auto 0;
+            padding: 4px 12px;
             border-radius: 999px;
-            background: rgba(0, 0, 0, 0.45);
+            background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(6px);
-            font-size: 11px;
-            font-weight: 600;
-            max-width: 84px;
+            font-size: 12.5px;
+            font-weight: 700;
+            max-width: 96px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -215,17 +210,18 @@
             position: absolute;
             left: 50%;
             top: 50%;
-            width: 170px;
-            height: 170px;
-            margin: -85px 0 0 -85px;
+            width: 120px;
+            height: 120px;
+            margin: -60px 0 0 -60px;
             display: flex;
             align-items: center;
             justify-content: center;
             transform: rotate(0deg);
             transition: none;
             z-index: 2;
-            filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.55));
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55));
             user-select: none;
+            will-change: transform;
         }
         .bottle svg { display: block; }
 
@@ -417,15 +413,32 @@
             <div class="table-circle"></div>
             <div class="emblem">💫</div>
             <div class="bottle" id="bottle">
-                <svg width="84" height="196" viewBox="0 0 84 196" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="34" y="2" width="16" height="11" rx="3" fill="#f2d8a9"/>
-                    <rect x="30" y="11" width="24" height="27" rx="5" fill="#d9a441"/>
-                    <rect x="35" y="36" width="14" height="40" fill="#2e7d46"/>
-                    <rect x="20" y="72" width="44" height="122" rx="16" fill="#2e7d46"/>
-                    <rect x="22" y="76" width="9" height="114" rx="4" fill="#1b5e35" opacity="0.85"/>
-                    <rect x="53" y="76" width="9" height="114" rx="4" fill="#4caf6e" opacity="0.75"/>
-                    <ellipse cx="42" cy="132" rx="17" ry="24" fill="#f7efdd"/>
-                    <text x="42" y="139" font-size="17" text-anchor="middle">💫</text>
+                <svg width="58" height="138" viewBox="0 0 58 138" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="glass" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0" stop-color="#215f39"/>
+                            <stop offset="0.45" stop-color="#3f9e63"/>
+                            <stop offset="1" stop-color="#1c5231"/>
+                        </linearGradient>
+                        <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0" stop-color="#e8c06a"/>
+                            <stop offset="0.5" stop-color="#f5da9b"/>
+                            <stop offset="1" stop-color="#c9973c"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- корок -->
+                    <rect x="23.5" y="2" width="11" height="8" rx="2.5" fill="#f6e3b4"/>
+                    <!-- золота фольга -->
+                    <rect x="20.5" y="9" width="17" height="18" rx="4" fill="url(#gold)"/>
+                    <!-- шия -->
+                    <rect x="24" y="25" width="10" height="28" fill="url(#glass)"/>
+                    <!-- струнке тіло -->
+                    <rect x="12.5" y="50" width="33" height="86" rx="12" fill="url(#glass)"/>
+                    <!-- відблиск скла -->
+                    <rect x="16" y="55" width="5" height="76" rx="2.5" fill="#6ecb92" opacity="0.65"/>
+                    <!-- етикетка -->
+                    <ellipse cx="29" cy="94" rx="12" ry="17" fill="#f8f1e0"/>
+                    <text x="29" y="100" font-size="12" text-anchor="middle">💫</text>
                 </svg>
             </div>
             <div id="playersLayer"></div>
@@ -447,7 +460,7 @@
 
     <nav class="bottom-nav">
         <a href="search.html?v=4" title="Пошук анкет">🔍</a>
-        <a href="bottle.html?v=10" class="current" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=11" class="current" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -520,7 +533,7 @@
             lastRenderKey = key;
 
             els.playersLayer.innerHTML = '';
-            const R = 42; // % від розміру арени
+            const R = 44; // % від розміру арени — ширше коло для великих аватарок
 
             list.forEach(function (uid, i) {
                 const ang = (angleOf(i, list.length) + 90) * Math.PI / 180;
@@ -580,27 +593,14 @@
 
         function animateBottle(fromDeg, toDeg, durationMs) {
             const t0 = performance.now();
-            let lastAngle = fromDeg;
-            let lastT = t0;
             function frame(now) {
                 const p = Math.min(1, (now - t0) / durationMs);
                 const a = bottleAngleAt(p, fromDeg, toDeg - fromDeg);
-
-                // Розмиття в русі: чим швидше крутиться — тим сильніший blur
-                const dt = Math.max(1, now - lastT);
-                const speed = Math.abs(a - lastAngle) / dt; // градусів за мс
-                const blur = Math.min(3, speed * 1.5);
-                els.bottle.style.filter = 'drop-shadow(0 8px 18px rgba(0,0,0,0.55))'
-                    + (blur > 0.12 ? ' blur(' + blur.toFixed(2) + 'px)' : '');
-
-                lastAngle = a;
-                lastT = now;
+                // Лише transform — композитор GPU, без фільтрів (щоб не підвисало на телефонах)
                 els.bottle.style.transform = 'rotate(' + a + 'deg)';
-
                 if (p < 1) {
                     requestAnimationFrame(frame);
                 } else {
-                    els.bottle.style.filter = 'drop-shadow(0 8px 18px rgba(0,0,0,0.55))';
                     sparkles();
                 }
             }
