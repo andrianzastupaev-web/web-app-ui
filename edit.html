@@ -29,7 +29,7 @@
 
         .field { margin-bottom: 14px; }
         .field label { display: block; font-size: 13px; font-weight: 600; color: #a8a8bd; margin-bottom: 5px; }
-        .field input, .field textarea {
+        .field input, .field textarea, .field select {
             width: 100%;
             padding: 11px 13px;
             border-radius: 10px;
@@ -39,7 +39,7 @@
             font-size: 15px;
             outline: none;
         }
-        .field input:focus, .field textarea:focus { border-color: #7c3aed; }
+        .field input:focus, .field textarea:focus, .field select:focus { border-color: #7c3aed; }
         .field textarea { resize: vertical; min-height: 80px; }
         .field .hint { font-size: 11px; color: #6d6d84; margin-top: 3px; }
 
@@ -161,7 +161,7 @@
 </head>
 <body>
     <div class="topbar">
-        <h1>Редагування анкети</h1>
+        <h1> Редагування анкети</h1>
         <a class="back" href="index.html">← Мій профіль</a>
     </div>
 
@@ -203,6 +203,34 @@
             </div>
         </div>
 
+        <div class="row">
+            <div class="field">
+                <label for="fGender">Я *</label>
+                <select id="fGender">
+                    <option value="">— обери —</option>
+                    <option value="male">Чоловік 👨</option>
+                    <option value="female">Жінка 👩</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="fLookingGender">Кого шукаю</label>
+                <select id="fLookingGender">
+                    <option value="all">Всіх</option>
+                    <option value="male">Хлопців</option>
+                    <option value="female">Дівчат</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="fLookingFor">Що шукаю</label>
+            <select id="fLookingFor">
+                <option value="dating">Стосунки 💞</option>
+                <option value="friends">Дружбу 🤝</option>
+                <option value="chat">Спілкування 💬</option>
+            </select>
+        </div>
+
         <div class="field">
             <label for="fBio">Про себе</label>
             <textarea id="fBio" maxlength="300" placeholder="Кава, музика, прогулянки ☕"></textarea>
@@ -227,11 +255,11 @@
         <div class="emoji">✅</div>
         <h2>Анкету збережено!</h2>
         <p>Твої дані оновлено</p>
-        <a class="cta" href="search.html?v=11">🔍 Дивитися анкети</a>
+        <a class="cta" href="search.html?v=13">🔍 Дивитися анкети</a>
     </div>
 
     <nav class="bottom-nav">
-        <a href="search.html?v=11" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=13" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
         <a href="bottle.html?v=24" title="Пляшечка">🍾</a>
     </nav>
@@ -342,6 +370,9 @@
             if (me.first_name) document.getElementById('fName').value = me.first_name;
             if (me.age) document.getElementById('fAge').value = me.age;
             if (me.city) document.getElementById('fCity').value = me.city;
+            if (me.gender) document.getElementById('fGender').value = me.gender;
+            document.getElementById('fLookingGender').value = me.looking_gender || 'all';
+            if (me.looking_for) document.getElementById('fLookingFor').value = me.looking_for;
             if (me.bio) {
                 document.getElementById('fBio').value = me.bio;
                 document.getElementById('bioCounter').textContent = me.bio.length;
@@ -373,6 +404,8 @@
 
             if (!name) return showError('Вкажи імʼя 🙂');
             if (!age || age < 16 || age > 99) return showError('Вік має бути від 16 до 99');
+            const gender = document.getElementById('fGender').value;
+            if (!gender) return showError('Вкажи свою статю 👤');
 
             saveBtn.disabled = true;
             saveBtn.textContent = 'Зберігаю... ⏳';
@@ -390,6 +423,9 @@
                     first_name: name,
                     age: age,
                     city: city || null,
+                    gender: gender,
+                    looking_gender: document.getElementById('fLookingGender').value || 'all',
+                    looking_for: document.getElementById('fLookingFor').value || null,
                     bio: bio || null,
                     photo_url: photoUrl,
                     photo_url2: photoUrl2,
