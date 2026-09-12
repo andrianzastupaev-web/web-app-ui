@@ -157,10 +157,9 @@
                 </div>
             </div>
         </div>
-        <a class="edit-btn" href="edit.html?v=7">✏️ Редагувати анкету</a>
-       
+        <a class="edit-btn" href="edit.html?v=7"> Редагувати анкету</a>
     <nav class="bottom-nav">
-        <a href="search.html?v=10" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=11" title="Пошук анкет">🔍</a>
         <a href="index.html" class="current" title="Мій профіль">👤</a>
         <a href="bottle.html?v=24" title="Пляшечка">🍾</a>
     </nav>
@@ -226,6 +225,27 @@
             els.photo.src = myPhotos[photoIdx];
             renderDots(myPhotos, photoIdx);
         });
+        // Свайп фото пальцем вліво/вправо
+        let touchX = null, touchY = null;
+        els.photoArea.addEventListener('touchstart', function (e) {
+            touchX = e.touches[0].clientX;
+            touchY = e.touches[0].clientY;
+        }, { passive: true });
+        els.photoArea.addEventListener('touchend', function (e) {
+            if (touchX === null) return;
+            const dx = e.changedTouches[0].clientX - touchX;
+            const dy = e.changedTouches[0].clientY - touchY;
+            touchX = null;
+            if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+            const photos = myPhotos;
+            if (photos.length < 2) return;
+            photoIdx = dx < 0
+                ? (photoIdx + 1) % photos.length
+                : (photoIdx - 1 + photos.length) % photos.length;
+            els.photo.src = photos[photoIdx];
+            renderDots(photos, photoIdx);
+        });
+
 
         function renderProfile(me) {
             myPhotos = [me.photo_url, me.photo_url2].filter(Boolean);
