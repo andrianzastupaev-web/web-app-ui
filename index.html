@@ -52,6 +52,20 @@
             font-size: 80px;
             background: #2a2a40;
         }
+        .photo-dots {
+            position: absolute;
+            top: 10px; left: 0; right: 0;
+            display: none;
+            justify-content: center;
+            gap: 5px;
+            z-index: 2;
+        }
+        .photo-dots span {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.45);
+        }
+        .photo-dots span.active { background: #fff; }
         .badge {
             position: absolute; top: 10px; left: 10px;
             padding: 5px 11px;
@@ -115,7 +129,7 @@
         <div class="emoji">📝</div>
         <h2>Створи свою анкету</h2>
         <p>Додай фото, ім'я та пару слів про себе — і починай знайомитися</p>
-        <a class="cta" href="edit.html?v=6">Заповнити анкету</a>
+        <a class="cta" href="edit.html?v=7">Заповнити анкету</a>
     </div>
 
     <div class="placeholder" id="loading">
@@ -134,6 +148,7 @@
             <div class="photo-area" id="photoArea">
                 <img class="photo" id="cPhoto" alt="">
                 <div class="photo-fallback" id="cFallback">🙂</div>
+                <div class="photo-dots" id="cDots"></div>
                 <span class="badge" id="cBadge"></span>
                 <div class="overlay">
                     <div class="name" id="cName"></div>
@@ -142,10 +157,10 @@
                 </div>
             </div>
         </div>
-        <a class="edit-btn" href="edit.html?v=6">Редагувати анкету</a>
-
+        <a class="edit-btn" href="edit.html?v=7">✏️ Редагувати анкету</a>
+       
     <nav class="bottom-nav">
-        <a href="search.html?v=9" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=10" title="Пошук анкет">🔍</a>
         <a href="index.html" class="current" title="Мій профіль">👤</a>
         <a href="bottle.html?v=24" title="Пляшечка">🍾</a>
     </nav>
@@ -178,6 +193,23 @@
             badge: document.getElementById('cBadge'),
         };
 
+        // Кружечки-індикатори фото (клікабельні)
+        function renderDots(photos, idx) {
+            const dots = document.getElementById('cDots');
+            if (photos.length < 2) { dots.style.display = 'none'; return; }
+            dots.style.display = 'flex';
+            dots.innerHTML = '';
+            photos.forEach(function (_, i) {
+                const d = document.createElement('span');
+                if (i === idx) d.classList.add('active');
+                d.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    els.photo.src = photos[i];
+                    renderDots(photos, i);
+                });
+                dots.appendChild(d);
+            });
+        }
         function show(el) {
             [els.loading, els.loadError, els.needRegister, els.profileWrap].forEach(function (e) {
                 e.style.display = 'none';
@@ -192,6 +224,7 @@
             if (myPhotos.length < 2) return;
             photoIdx = (photoIdx + 1) % myPhotos.length;
             els.photo.src = myPhotos[photoIdx];
+            renderDots(myPhotos, photoIdx);
         });
 
         function renderProfile(me) {
@@ -200,6 +233,7 @@
 
             if (myPhotos.length) {
                 els.photo.src = myPhotos[0];
+                renderDots(myPhotos, 0);
                 els.photo.style.display = 'block';
                 els.fallback.style.display = 'none';
             } else {
