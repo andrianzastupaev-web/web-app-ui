@@ -94,7 +94,6 @@
         .btn-dislike { background: #2a2a40; }
         .btn-like { background: #c0265c; }
 
-        .hint-line { text-align: center; margin-top: 8px; font-size: 11px; color: #6d6d84; }
 
         /* Нижнє меню */
         .bottom-nav {
@@ -116,19 +115,95 @@
             background: #1d1d2e;
         }
         .bottom-nav a.current { background: #35355a; }
+
+        /* Фільтри пошуку */
+        .filter-btn {
+            padding: 8px 14px;
+            border: 1px solid #33334a;
+            border-radius: 10px;
+            background: #1d1d2e;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .filter-panel {
+            display: none;
+            background: #1d1d2e;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        .filter-panel .field { margin-bottom: 10px; }
+        .filter-panel label { display: block; font-size: 12px; font-weight: 600; color: #a8a8bd; margin-bottom: 4px; }
+        .filter-panel input, .filter-panel select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #33334a;
+            background: #15151f;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+        .filter-apply {
+            width: 100%;
+            padding: 12px;
+            margin-top: 4px;
+            border: none;
+            border-radius: 10px;
+            background: #7c3aed;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .frow { display: flex; gap: 10px; }
+        .frow .field { flex: 1; }
     </style>
 </head>
 <body>
     <div class="topbar">
         <h1>🔍 Пошук</h1>
-        <a class="back" href="index.html">← Мій профіль</a>
+        <button class="filter-btn" id="filterBtn">⚙️ Фільтр</button>
+    </div>
+
+    <div class="filter-panel" id="filterPanel">
+        <div class="frow">
+            <div class="field">
+                <label>Вік від</label>
+                <input id="flMin" type="number" min="16" max="99" value="16">
+            </div>
+            <div class="field">
+                <label>до</label>
+                <input id="flMax" type="number" min="16" max="99" value="99">
+            </div>
+        </div>
+        <div class="field">
+            <label>Показувати</label>
+            <select id="flGender">
+                <option value="all">Всіх</option>
+                <option value="male">Хлопців</option>
+                <option value="female">Дівчат</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>Учасники, що шукають</label>
+            <select id="flIntent">
+                <option value="any">Будь-що</option>
+                <option value="dating">Стосунки 💞</option>
+                <option value="friends">Дружбу 🤝</option>
+                <option value="chat">Спілкування 💬</option>
+            </select>
+        </div>
+        <button class="filter-apply" id="applyFilter">Застосувати фільтр</button>
     </div>
 
     <div class="placeholder" id="needRegister">
         <div class="emoji">📝</div>
         <h2>Спочатку — анкета</h2>
         <p>Заповни свою анкету, щоб почати знайомитися</p>
-        <a class="cta" href="edit.html?v=7">Заповнити анкету</a>
+        <a class="cta" href="edit.html?v=8">Заповнити анкету</a>
     </div>
 
     <div class="placeholder" id="noMore">
@@ -167,8 +242,10 @@
             <button class="btn-dislike" id="btnDislike" title="Не цікаво">❌</button>
             <button class="btn-like" id="btnLike" title="Сподобалось">❤️</button>
         </div>
+    </div>
+
     <nav class="bottom-nav">
-        <a href="search.html?v=11" class="current" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=13" class="current" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
         <a href="bottle.html?v=24" title="Пляшечка">🍾</a>
     </nav>
@@ -315,17 +392,45 @@
         els.like.addEventListener('click', function () { react('like'); });
         els.dislike.addEventListener('click', function () { react('dislike'); });
 
+        let myFilters = { age_min: 16, age_max: 99, gender: 'all', intent: 'any' };
+
+        function fillFilterPanel() {
+            document.getElementById('flMin').value = myFilters.age_min;
+            document.getElementById('flMax').value = myFilters.age_max;
+            document.getElementById('flGender').value = myFilters.gender;
+            document.getElementById('flIntent').value = myFilters.intent;
+        }
+
         async function loadDeck(showRatedAgain) {
             const rated = await sb.from('reactions')
                 .select('to_user').eq('from_user', tgUser.id);
             const seen = new Set((rated.data || []).map(function (r) { return r.to_user; }));
 
+            // Мої збережені фільтри
+            const meRes = await sb.from('users')
+                .select('*').eq('user_id', tgUser.id).maybeSingle();
+            const me = meRes.data;
+            if (me) {
+                myFilters = {
+                    age_min: me.filter_age_min || 16,
+                    age_max: me.filter_age_max || 99,
+                    gender: me.filter_gender || 'all',
+                    intent: me.filter_intent || 'any'
+                };
+                fillFilterPanel();
+            }
+
             const all = await sb.from('users')
                 .select('*').order('created_at', { ascending: false }).limit(100);
 
             deck = (all.data || []).filter(function (u) {
-                return u.user_id !== tgUser.id
-                    && (showRatedAgain || !seen.has(u.user_id));
+                if (u.user_id === tgUser.id) return false;
+                if (!showRatedAgain && seen.has(u.user_id)) return false;
+                const age = u.age || 0;
+                if (age && (age < myFilters.age_min || age > myFilters.age_max)) return false;
+                if (myFilters.gender !== 'all' && u.gender !== myFilters.gender) return false;
+                if (myFilters.intent !== 'any' && u.looking_for !== myFilters.intent) return false;
+                return true;
             });
             pos = 0;
 
@@ -358,6 +463,35 @@
             show(els.loading);
             try {
                 await loadDeck(true);
+            } catch (err) {
+                console.error(err);
+                show(els.loadError);
+            }
+        });
+
+        // Панель фільтрів
+        document.getElementById('filterBtn').addEventListener('click', function () {
+            const p = document.getElementById('filterPanel');
+            p.style.display = p.style.display === 'block' ? 'none' : 'block';
+        });
+
+        document.getElementById('applyFilter').addEventListener('click', async function () {
+            const patch = {
+                user_id: tgUser.id,
+                filter_age_min: parseInt(document.getElementById('flMin').value, 10) || 16,
+                filter_age_max: parseInt(document.getElementById('flMax').value, 10) || 99,
+                filter_gender: document.getElementById('flGender').value,
+                filter_intent: document.getElementById('flIntent').value
+            };
+            try {
+                await sb.from('users').upsert(patch, { onConflict: 'user_id' });
+            } catch (err) {
+                console.error(err);
+            }
+            document.getElementById('filterPanel').style.display = 'none';
+            show(els.loading);
+            try {
+                await loadDeck(false);
             } catch (err) {
                 console.error(err);
                 show(els.loadError);
