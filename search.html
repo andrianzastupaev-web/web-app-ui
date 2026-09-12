@@ -245,7 +245,7 @@
     </div>
 
     <nav class="bottom-nav">
-        <a href="search.html?v=13" class="current" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=14" class="current" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
         <a href="bottle.html?v=24" title="Пляшечка">🍾</a>
     </nav>
@@ -403,8 +403,13 @@
 
         async function loadDeck(showRatedAgain) {
             const rated = await sb.from('reactions')
-                .select('to_user').eq('from_user', tgUser.id);
+                .select('to_user, kind').eq('from_user', tgUser.id);
             const seen = new Set((rated.data || []).map(function (r) { return r.to_user; }));
+            // Кому ТИ поставив лайк — їх анкети показуємо вище (першими)
+            const myLikes = new Set(
+                (rated.data || []).filter(function (r) { return r.kind === 'like'; })
+                    .map(function (r) { return r.to_user; })
+            );
 
             // Мої збережені фільтри
             const meRes = await sb.from('users')
@@ -431,6 +436,11 @@
                 if (myFilters.gender !== 'all' && u.gender !== myFilters.gender) return false;
                 if (myFilters.intent !== 'any' && u.looking_for !== myFilters.intent) return false;
                 return true;
+            });
+
+            // Ті, хто отримав твій лайк — на початок колоди
+            deck.sort(function (a, b) {
+                return (myLikes.has(b.user_id) ? 1 : 0) - (myLikes.has(a.user_id) ? 1 : 0);
             });
             pos = 0;
 
