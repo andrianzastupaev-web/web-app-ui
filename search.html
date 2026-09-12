@@ -167,11 +167,8 @@
             <button class="btn-dislike" id="btnDislike" title="Не цікаво">❌</button>
             <button class="btn-like" id="btnLike" title="Сподобалось">❤️</button>
         </div>
-        <div class="hint-line">❤️ — сподобалось • ❌ — пропустити</div>
-    </div>
-
     <nav class="bottom-nav">
-        <a href="search.html?v=10" class="current" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=11" class="current" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
         <a href="bottle.html?v=24" title="Пляшечка">🍾</a>
     </nav>
@@ -271,6 +268,27 @@
             els.photo.src = photos[photoIdx];
             renderDots(photos, photoIdx);
         });
+        // Свайп фото пальцем вліво/вправо
+        let touchX = null, touchY = null;
+        els.photoArea.addEventListener('touchstart', function (e) {
+            touchX = e.touches[0].clientX;
+            touchY = e.touches[0].clientY;
+        }, { passive: true });
+        els.photoArea.addEventListener('touchend', function (e) {
+            if (touchX === null) return;
+            const dx = e.changedTouches[0].clientX - touchX;
+            const dy = e.changedTouches[0].clientY - touchY;
+            touchX = null;
+            if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+            const photos = cardPhotos(deck[pos]);
+            if (photos.length < 2) return;
+            photoIdx = dx < 0
+                ? (photoIdx + 1) % photos.length
+                : (photoIdx - 1 + photos.length) % photos.length;
+            els.photo.src = photos[photoIdx];
+            renderDots(photos, photoIdx);
+        });
+
 
         // Миттєва реакція: тиск → одразу наступна анкета
         function react(kind) {
