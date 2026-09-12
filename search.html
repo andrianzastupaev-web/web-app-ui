@@ -51,6 +51,20 @@
             font-size: 80px;
             background: #2a2a40;
         }
+        .photo-dots {
+            position: absolute;
+            top: 10px; left: 0; right: 0;
+            display: none;
+            justify-content: center;
+            gap: 5px;
+            z-index: 2;
+        }
+        .photo-dots span {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.45);
+        }
+        .photo-dots span.active { background: #fff; }
         .badge {
             position: absolute; top: 10px; left: 10px;
             padding: 5px 11px;
@@ -114,7 +128,7 @@
         <div class="emoji">📝</div>
         <h2>Спочатку — анкета</h2>
         <p>Заповни свою анкету, щоб почати знайомитися</p>
-        <a class="cta" href="edit.html?v=6">Заповнити анкету</a>
+        <a class="cta" href="edit.html?v=7">Заповнити анкету</a>
     </div>
 
     <div class="placeholder" id="noMore">
@@ -140,6 +154,7 @@
             <div class="photo-area" id="photoArea">
                 <img class="photo" id="cPhoto" alt="">
                 <div class="photo-fallback" id="cFallback">🙂</div>
+                <div class="photo-dots" id="cDots"></div>
                 <span class="badge" id="cBadge"></span>
                 <div class="overlay">
                     <div class="name" id="cName"></div>
@@ -152,8 +167,11 @@
             <button class="btn-dislike" id="btnDislike" title="Не цікаво">❌</button>
             <button class="btn-like" id="btnLike" title="Сподобалось">❤️</button>
         </div>
+        <div class="hint-line">❤️ — сподобалось • ❌ — пропустити</div>
+    </div>
+
     <nav class="bottom-nav">
-        <a href="search.html?v=9" class="current" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=10" class="current" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
         <a href="bottle.html?v=24" title="Пляшечка">🍾</a>
     </nav>
@@ -189,6 +207,23 @@
             dislike: document.getElementById('btnDislike'),
         };
 
+        // Кружечки-індикатори фото (клікабельні)
+        function renderDots(photos, idx) {
+            const dots = document.getElementById('cDots');
+            if (photos.length < 2) { dots.style.display = 'none'; return; }
+            dots.style.display = 'flex';
+            dots.innerHTML = '';
+            photos.forEach(function (_, i) {
+                const d = document.createElement('span');
+                if (i === idx) d.classList.add('active');
+                d.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    els.photo.src = photos[i];
+                    renderDots(photos, i);
+                });
+                dots.appendChild(d);
+            });
+        }
         function show(el) {
             [els.loading, els.loadError, els.needRegister, els.noMore, els.deckWrap].forEach(function (e) {
                 e.style.display = 'none';
@@ -212,6 +247,7 @@
 
             if (photos.length) {
                 els.photo.src = photos[0];
+            renderDots(photos, 0);
                 els.photo.style.display = 'block';
                 els.fallback.style.display = 'none';
             } else {
@@ -233,6 +269,7 @@
             if (photos.length < 2) return;
             photoIdx = (photoIdx + 1) % photos.length;
             els.photo.src = photos[photoIdx];
+            renderDots(photos, photoIdx);
         });
 
         // Миттєва реакція: тиск → одразу наступна анкета
