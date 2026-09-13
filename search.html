@@ -199,7 +199,13 @@
         <button class="filter-apply" id="applyFilter">Застосувати фільтр</button>
     </div>
 
-    <div class="placeholder" id="needRegister">
+        <div class="placeholder" id="moderation">
+        <div class="emoji">⏳</div>
+        <h2>Анкета на модерації</h2>
+        <p>Адмін перевіряє твою анкету. Скоро все буде!</p>
+    </div>
+
+<div class="placeholder" id="needRegister">
         <div class="emoji">📝</div>
         <h2>Спочатку — анкета</h2>
         <p>Заповни свою анкету, щоб почати знайомитися</p>
@@ -268,6 +274,7 @@
             loading: document.getElementById('loading'),
             loadError: document.getElementById('loadError'),
             needRegister: document.getElementById('needRegister'),
+            moderation: document.getElementById('moderation'),
             noMore: document.getElementById('noMore'),
             deckWrap: document.getElementById('deckWrap'),
             photo: document.getElementById('cPhoto'),
@@ -299,7 +306,7 @@
             });
         }
         function show(el) {
-            [els.loading, els.loadError, els.needRegister, els.noMore, els.deckWrap].forEach(function (e) {
+            [els.loading, els.loadError, els.needRegister, els.moderation, els.noMore, els.deckWrap].forEach(function (e) {
                 e.style.display = 'none';
             });
             if (el) el.style.display = 'block';
