@@ -224,7 +224,13 @@
 
     <div class="status-line" id="statusLine"></div>
 
-    <div class="placeholder" id="needRegister">
+        <div class="placeholder" id="moderation">
+        <div class="emoji">⏳</div>
+        <h2>Анкета на модерації</h2>
+        <p>Адмін перевіряє твою анкету. Скоро все буде!</p>
+    </div>
+
+<div class="placeholder" id="needRegister">
         <div class="emoji">📝</div>
         <h2>Спочатку — анкета</h2>
         <p>Грають лише зареєстровані учасники</p>
@@ -307,6 +313,7 @@
         const els = {
             loading: document.getElementById('loading'),
             needRegister: document.getElementById('needRegister'),
+            moderation: document.getElementById('moderation'),
             gameFull: document.getElementById('gameFull'),
             gameWrap: document.getElementById('gameWrap'),
             playersLayer: document.getElementById('playersLayer'),
@@ -608,8 +615,7 @@
                 return;
             }
             if (!my.is_approved) {
-                els.statusLine.textContent = '⏳ Твоя анкета на модерації. Дочекайся підтвердження!';
-                show(els.needRegister);
+                show(els.moderation);
                 return;
             }
             show(els.loading);
