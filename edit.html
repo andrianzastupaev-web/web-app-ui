@@ -255,11 +255,17 @@
         <div class="emoji">✅</div>
         <h2>Анкету збережено!</h2>
         <p>Твої дані оновлено</p>
-        <a class="cta" href="search.html?v=14">🔍 Дивитися анкети</a>
+        <a class="cta" href="search.html?v=15">🔍 Дивитися анкети</a>
+    </div>
+
+    <div class="success-screen" id="moderationScreen">
+        <div class="emoji">⏳</div>
+        <h2>Анкету надіслано на модерацію</h2>
+        <p>Після підтвердження адміністратором<br>ти зможеш користуватися застосунком</p>
     </div>
 
     <nav class="bottom-nav">
-        <a href="search.html?v=14" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=15" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
         <a href="bottle.html?v=25" title="Пляшечка">🍾</a>
     </nav>
@@ -443,7 +449,19 @@
                 }).then(function () {}, console.error);
 
                 document.getElementById('formCard').style.display = 'none';
-                document.getElementById('successScreen').style.display = 'block';
+
+                // Перевіряємо чи анкета підтверджена
+                const { data: saved } = await sb.from('users')
+                    .select('is_approved').eq('user_id', tgUser.id).maybeSingle();
+
+                if (saved && saved.is_approved) {
+                    // Вже підтверджена (редагування) — показуємо успіх з кнопкою
+                    document.getElementById('successScreen').style.display = 'block';
+                } else {
+                    // Нова / непідтверджена — екран модерації (без навігації)
+                    document.getElementById('moderationScreen').style.display = 'block';
+                    document.querySelector('.bottom-nav').style.display = 'none';
+                }
             } catch (err) {
                 console.error(err);
                 try { tg?.HapticFeedback?.notificationOccurred('error'); } catch (e) {}
