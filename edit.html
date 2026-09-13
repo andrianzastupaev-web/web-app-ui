@@ -161,7 +161,7 @@
 </head>
 <body>
     <div class="topbar">
-        <h1> Редагування анкети</h1>
+        <h1>✏️ Редагування анкети</h1>
         <a class="back" href="index.html">← Мій профіль</a>
     </div>
 
@@ -208,8 +208,8 @@
                 <label for="fGender">Я *</label>
                 <select id="fGender">
                     <option value="">— обери —</option>
-                    <option value="male">Чоловік </option>
-                    <option value="female">Жінка </option>
+                    <option value="male">Чоловік 👨</option>
+                    <option value="female">Жінка 👩</option>
                 </select>
             </div>
             <div class="field">
@@ -261,7 +261,7 @@
     <nav class="bottom-nav">
         <a href="search.html?v=14" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
-        <a href="bottle.html?v=24" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=25" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -405,7 +405,7 @@
             if (!name) return showError('Вкажи імʼя 🙂');
             if (!age || age < 16 || age > 99) return showError('Вік має бути від 16 до 99');
             const gender = document.getElementById('fGender').value;
-            if (!gender) return showError('Вкажи свою стать 👤');
+            if (!gender) return showError('Вкажи свою статю 👤');
 
             saveBtn.disabled = true;
             saveBtn.textContent = 'Зберігаю... ⏳';
@@ -435,6 +435,12 @@
                 if (error) throw error;
 
                 try { tg?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
+
+                // Сповіщаємо бота — надішле підтвердження в чат
+                sb.from('anketa_events').insert({
+                    user_id: tgUser.id,
+                    event: 'saved'
+                }).then(function () {}, console.error);
 
                 document.getElementById('formCard').style.display = 'none';
                 document.getElementById('successScreen').style.display = 'block';
