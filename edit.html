@@ -208,8 +208,8 @@
                 <label for="fGender">Я *</label>
                 <select id="fGender">
                     <option value="">— обери —</option>
-                    <option value="male">Чоловік 👨</option>
-                    <option value="female">Жінка 👩</option>
+                    <option value="male">Чоловік </option>
+                    <option value="female">Жінка </option>
                 </select>
             </div>
             <div class="field">
@@ -405,7 +405,7 @@
             if (!name) return showError('Вкажи імʼя 🙂');
             if (!age || age < 16 || age > 99) return showError('Вік має бути від 16 до 99');
             const gender = document.getElementById('fGender').value;
-            if (!gender) return showError('Вкажи свою статю 👤');
+            if (!gender) return showError('Вкажи свою стать 👤');
 
             saveBtn.disabled = true;
             saveBtn.textContent = 'Зберігаю... ⏳';
