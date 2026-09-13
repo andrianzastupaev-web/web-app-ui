@@ -203,7 +203,7 @@
         <div class="emoji">📝</div>
         <h2>Спочатку — анкета</h2>
         <p>Заповни свою анкету, щоб почати знайомитися</p>
-        <a class="cta" href="edit.html?v=8">Заповнити анкету</a>
+        <a class="cta" href="edit.html?v=9">Заповнити анкету</a>
     </div>
 
     <div class="placeholder" id="noMore">
@@ -247,7 +247,7 @@
     <nav class="bottom-nav">
         <a href="search.html?v=14" class="current" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
-        <a href="bottle.html?v=24" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=25" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -430,6 +430,7 @@
 
             deck = (all.data || []).filter(function (u) {
                 if (u.user_id === tgUser.id) return false;
+                if (!u.is_approved) return false;  // тільки підтверджені адміном
                 if (!showRatedAgain && seen.has(u.user_id)) return false;
                 const age = u.age || 0;
                 if (age && (age < myFilters.age_min || age > myFilters.age_max)) return false;
