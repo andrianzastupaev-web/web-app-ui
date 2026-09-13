@@ -136,7 +136,7 @@
 </head>
 <body>
     <div class="topbar">
-        <h1>💫 Circles <span></span></h1>
+        <h1>💫 Circles <span>— мій профіль</span></h1>
     </div>
 
     <div class="placeholder" id="needRegister">
@@ -144,6 +144,12 @@
         <h2>Створи свою анкету</h2>
         <p>Додай фото, ім'я та пару слів про себе — і починай знайомитися</p>
         <a class="cta" href="edit.html?v=9">Заповнити анкету</a>
+    </div>
+
+    <div class="placeholder" id="moderation">
+        <div class="emoji">⏳</div>
+        <h2>Анкета на модерації</h2>
+        <p>Адмін перевіряє твою анкету.<br>Це зазвичай займає кілька хвилин.</p>
     </div>
 
     <div class="placeholder" id="loading">
@@ -171,8 +177,10 @@
                 </div>
             </div>
         </div>
-        <a class="edit-btn" href="edit.html?v=9">Редагувати анкету</a>
+        <a class="edit-btn" href="edit.html?v=9">✏️ Редагувати анкету</a>
         <a class="support-btn" href="https://t.me/zab_ua">📞 Підтримка</a>
+        <div class="view-hint">Так тебе бачать інші учасники</div>
+    </div>
 
     <nav class="bottom-nav">
         <a href="search.html?v=14" title="Пошук анкет">🔍</a>
@@ -198,6 +206,7 @@
             loading: document.getElementById('loading'),
             loadError: document.getElementById('loadError'),
             needRegister: document.getElementById('needRegister'),
+            moderation: document.getElementById('moderation'),
             profileWrap: document.getElementById('profileWrap'),
             photo: document.getElementById('cPhoto'),
             fallback: document.getElementById('cFallback'),
@@ -226,7 +235,7 @@
             });
         }
         function show(el) {
-            [els.loading, els.loadError, els.needRegister, els.profileWrap].forEach(function (e) {
+            [els.loading, els.loadError, els.needRegister, els.moderation, els.profileWrap].forEach(function (e) {
                 e.style.display = 'none';
             });
             if (el) el.style.display = 'block';
@@ -301,6 +310,9 @@
 
             if (!me) {
                 show(els.needRegister);
+            } else if (!me.is_approved) {
+                // На модерації — показуємо ТОЛЬКИ цей екран
+                show(els.moderation);
             } else {
                 renderProfile(me);
             }
