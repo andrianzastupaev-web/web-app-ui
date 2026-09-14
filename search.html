@@ -495,7 +495,7 @@
 
         document.getElementById('applyFilter').addEventListener('click', async function () {
             const patch = {
-                user_id: tgUser.id,
+                user_id: tgUser.id, 
                 filter_age_min: parseInt(document.getElementById('flMin').value, 10) || 16,
                 filter_age_max: parseInt(document.getElementById('flMax').value, 10) || 99,
                 filter_gender: document.getElementById('flGender').value,
