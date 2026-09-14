@@ -194,6 +194,64 @@
         }
         .action-banner.shown { visibility: visible; }
 
+        /* Модальне вікно перегляду профілю гравця */
+        .profile-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .profile-modal.open { display: flex; }
+        .profile-modal-card {
+            background: #1d1d2e;
+            border-radius: 16px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 360px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .profile-modal-photo {
+            width: 100%;
+            aspect-ratio: 3/4;
+            object-fit: cover;
+            display: block;
+        }
+        .profile-modal-fallback {
+            width: 100%;
+            aspect-ratio: 3/4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 70px;
+            background: #2a2a40;
+        }
+        .profile-modal-info {
+            padding: 14px;
+        }
+        .profile-modal-info .name { font-size: 20px; font-weight: 700; }
+        .profile-modal-info .meta { font-size: 13px; color: #a8a8bd; margin-top: 3px; }
+        .profile-modal-info .bio { font-size: 13px; color: #c9c9da; line-height: 1.45; margin-top: 8px; }
+        .profile-modal-actions {
+            display: flex;
+            gap: 10px;
+            padding: 0 14px 14px;
+        }
+        .profile-modal-actions button {
+            flex: 1;
+            padding: 13px;
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .pm-like { background: #c0265c; }
+        .pm-close { background: #2a2a40; }
+
         /* Нижнє меню */
         .bottom-nav {
             position: fixed;
@@ -290,8 +348,25 @@
     <nav class="bottom-nav">
         <a href="search.html?v=15" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
-        <a href="bottle.html?v=25" class="current" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=26" class="current" title="Пляшечка">🍾</a>
     </nav>
+
+    <!-- Модальне вікно перегляду профілю гравця -->
+    <div class="profile-modal" id="profileModal">
+        <div class="profile-modal-card">
+            <img class="profile-modal-photo" id="pmPhoto" alt="">
+            <div class="profile-modal-fallback" id="pmFallback">🙂</div>
+            <div class="profile-modal-info">
+                <div class="name" id="pmName"></div>
+                <div class="meta" id="pmMeta"></div>
+                <div class="bio" id="pmBio"></div>
+            </div>
+            <div class="profile-modal-actions">
+                <button class="pm-close" id="pmClose" title="Закрити">✕</button>
+                <button class="pm-like" id="pmLike" title="Лайкнути">❤️</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // === Налаштування Supabase (підставлено автоматично з .env) ===
@@ -392,35 +467,87 @@
                         : '👤') + '</div>'
                     + '<div class="pname">' + badge + ' ' + nameOf(uid) + '</div>';
 
-                // Тап по аватарці → лайкнути профіль (не себе)
+                // Тап по аватарці → відкриваємо профіль для перегляду
                 if (uid !== tgUser.id) {
-                    div.addEventListener('click', async function () {
-                        try {
-                            sb.from('reactions').upsert({
-                                from_user: tgUser.id,
-                                to_user: uid,
-                                kind: 'like',
-                                notified: false
-                            }, { onConflict: 'from_user,to_user' }).then(function () {}, console.error);
-                            sb.from('users').select('rating').eq('user_id', uid).maybeSingle()
-                                .then(function (r) {
-                                    const newRating = ((r.data && r.data.rating) || 0) + 1;
-                                    sb.from('users').update({ rating: newRating })
-                                        .eq('user_id', uid).then(function () {}, console.error);
-                                });
-                            try { tg?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
-                            banner.textContent = '❤️ Ти лайкнув ' + nameOf(uid) + '!';
-                            banner.classList.add('shown');
-                            setTimeout(function () { banner.classList.remove('shown'); }, 2000);
-                        } catch (err) {
-                            console.error(err);
-                        }
+                    div.addEventListener('click', function () {
+                        showProfileModal(uid);
                     });
                 }
 
                 els.playersLayer.appendChild(div);
             });
         }
+
+        // === Модальне вікно профілю ===
+        const pm = {
+            modal: document.getElementById('profileModal'),
+            photo: document.getElementById('pmPhoto'),
+            fallback: document.getElementById('pmFallback'),
+            name: document.getElementById('pmName'),
+            meta: document.getElementById('pmMeta'),
+            bio: document.getElementById('pmBio'),
+            like: document.getElementById('pmLike'),
+            close: document.getElementById('pmClose'),
+        };
+        let pmUserId = null;
+
+        function showProfileModal(uid) {
+            const p = profiles[uid];
+            if (!p) return;
+            pmUserId = uid;
+
+            const photo = p.photo_url || p.photo_url2;
+            if (photo) {
+                pm.photo.src = photo;
+                pm.photo.style.display = 'block';
+                pm.fallback.style.display = 'none';
+            } else {
+                pm.photo.style.display = 'none';
+                pm.fallback.style.display = 'flex';
+            }
+
+            const badge = ratingBadge(p.rating || 0);
+            pm.name.textContent = badge + ' ' + (p.first_name || 'Учасник') + (p.age ? ', ' + p.age : '');
+            pm.meta.textContent = p.city ? '📍 ' + p.city : '';
+            pm.bio.textContent = p.bio ? '❝ ' + p.bio + ' ❞' : '';
+            pm.bio.style.display = p.bio ? 'block' : 'none';
+
+            pm.modal.classList.add('open');
+        }
+
+        pm.close.addEventListener('click', function () {
+            pm.modal.classList.remove('open');
+        });
+
+        pm.modal.addEventListener('click', function (e) {
+            if (e.target === pm.modal) pm.modal.classList.remove('open');
+        });
+
+        pm.like.addEventListener('click', function () {
+            if (!pmUserId) return;
+            const uid = pmUserId;
+            pm.modal.classList.remove('open');
+
+            // Лайк + рейтинг
+            sb.from('reactions').upsert({
+                from_user: tgUser.id,
+                to_user: uid,
+                kind: 'like',
+                notified: false
+            }, { onConflict: 'from_user,to_user' }).then(function () {}, console.error);
+
+            sb.from('users').select('rating').eq('user_id', uid).maybeSingle()
+                .then(function (r) {
+                    const newRating = ((r.data && r.data.rating) || 0) + 1;
+                    sb.from('users').update({ rating: newRating })
+                        .eq('user_id', uid).then(function () {}, console.error);
+                });
+
+            try { tg?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
+            els.banner.textContent = '❤️ Ти лайкнув ' + nameOf(uid) + '!';
+            els.banner.classList.add('shown');
+            setTimeout(function () { els.banner.classList.remove('shown'); }, 2000);
+        });
 
         // === Обертання: коротке й швидке (1.4 с), детерміноване ===
         let bottleDeg = 0;
