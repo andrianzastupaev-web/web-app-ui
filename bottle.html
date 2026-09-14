@@ -211,46 +211,86 @@
             border-radius: 16px;
             overflow: hidden;
             width: 100%;
-            max-width: 360px;
-            max-height: 85vh;
-            overflow-y: auto;
+            max-width: 280px;
         }
         .profile-modal-photo {
             width: 100%;
-            aspect-ratio: 3/4;
+            aspect-ratio: 1/1;
             object-fit: cover;
             display: block;
         }
         .profile-modal-fallback {
             width: 100%;
-            aspect-ratio: 3/4;
+            aspect-ratio: 1/1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 70px;
+            font-size: 52px;
             background: #2a2a40;
         }
-        .profile-modal-info {
-            padding: 14px;
-        }
-        .profile-modal-info .name { font-size: 20px; font-weight: 700; }
-        .profile-modal-info .meta { font-size: 13px; color: #a8a8bd; margin-top: 3px; }
-        .profile-modal-info .bio { font-size: 13px; color: #c9c9da; line-height: 1.45; margin-top: 8px; }
+        .profile-modal-info { padding: 12px 14px 8px; }
+        .profile-modal-info .name { font-size: 17px; font-weight: 700; }
+        .profile-modal-info .meta { font-size: 12px; color: #a8a8bd; margin-top: 2px; }
+        .profile-modal-info .bio { font-size: 12px; color: #c9c9da; line-height: 1.4; margin-top: 6px; }
         .profile-modal-actions {
             display: flex;
-            gap: 10px;
-            padding: 0 14px 14px;
+            gap: 8px;
+            padding: 6px 14px 12px;
         }
         .profile-modal-actions button {
             flex: 1;
-            padding: 13px;
+            padding: 11px;
             border: none;
-            border-radius: 12px;
-            font-size: 20px;
+            border-radius: 10px;
+            font-size: 18px;
             cursor: pointer;
         }
         .pm-like { background: #c0265c; }
-        .pm-close { background: #2a2a40; }
+        .pm-close { background: #2a2a40; color: #8a8aa0; font-size: 13px; font-weight: 600; }
+
+        /* Інфо-панель */
+        .info-panel {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .info-panel.open { display: flex; }
+        .info-panel-card {
+            background: #1d1d2e;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 320px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .info-panel-card h3 { font-size: 16px; margin-bottom: 10px; }
+        .info-panel-card .rule { font-size: 12.5px; color: #c9c9da; line-height: 1.5; margin-bottom: 6px; }
+        .info-panel-card .rating-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid #2a2a40;
+            font-size: 12.5px;
+        }
+        .info-panel-card .rating-row:last-child { border-bottom: none; }
+        .info-panel-card .rating-row .badge { font-size: 16px; }
+        .info-panel-card .rating-row .pts { color: #8a8aa0; font-size: 11px; }
+        .info-btn {
+            padding: 5px 12px;
+            border: 1px solid #33334a;
+            border-radius: 8px;
+            background: #1d1d2e;
+            color: #8a8aa0;
+            font-size: 12px;
+            cursor: pointer;
+        }
 
         /* Нижнє меню */
         .bottom-nav {
@@ -277,7 +317,8 @@
 <body>
     <div class="topbar">
         <h1>🍾 Пляшечка</h1>
-        <a class="back" href="index.html">← Мій профіль</a>
+        <button class="info-btn" id="infoBtn">ℹ️ Гра</button>
+        <a class="back" href="index.html">← Профіль</a>
     </div>
 
     <div class="status-line" id="statusLine"></div>
@@ -348,8 +389,42 @@
     <nav class="bottom-nav">
         <a href="search.html?v=15" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
-        <a href="bottle.html?v=26" class="current" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=27" class="current" title="Пляшечка">🍾</a>
     </nav>
+
+    <!-- Інфо-панель гри -->
+    <div class="info-panel" id="infoPanel">
+        <div class="info-panel-card">
+            <h3>🍾 Як грати в Пляшечку</h3>
+            <div class="rule">• Тисни «🍾 Крутити» — пляшечка обертається</div>
+            <div class="rule">• Вона вказує на випадкового гравця</div>
+            <div class="rule">• Ти обираєш дію: 😘 ❤️ 👎 🍅</div>
+            <div class="rule">• Далі крутить той, на кого вказала пляшечка</div>
+            <div class="rule">• Тапни на аватарку — переглянеш профіль і лайкнеш</div>
+
+            <h3 style="margin-top:14px">📊 Рейтинг</h3>
+            <div class="rule">
+                😘 Поцілунок <b style="color:#4caf6e">+2</b> •
+                ❤️ Сердечко <b style="color:#4caf6e">+1</b> •
+                👎 Дизлайк <b style="color:#e05252">−1</b> •
+                🍅 Помідор <b style="color:#e05252">−2</b> •
+                ❤️ Лайк <b style="color:#4caf6e">+1</b>
+            </div>
+
+            <div style="margin-top:10px">
+                <div class="rating-row"><span class="badge">🤍</span> Новачок <span class="pts">0–9</span></div>
+                <div class="rating-row"><span class="badge">💙</span> Приємний <span class="pts">10–24</span></div>
+                <div class="rating-row"><span class="badge">💚</span> Цікавий <span class="pts">25–49</span></div>
+                <div class="rating-row"><span class="badge">💛</span> Взаємний <span class="pts">50–99</span></div>
+                <div class="rating-row"><span class="badge">🧡</span> Гарячий <span class="pts">100–199</span></div>
+                <div class="rating-row"><span class="badge">❤️</span> Популярний <span class="pts">200–399</span></div>
+                <div class="rating-row"><span class="badge">💜</span> Легенда <span class="pts">400–799</span></div>
+                <div class="rating-row"><span class="badge">💖</span> ЗІРКА <span class="pts">800+</span></div>
+            </div>
+
+            <button class="btn" id="infoClose" style="margin-top:12px">← Назад до гри</button>
+        </div>
+    </div>
 
     <!-- Модальне вікно перегляду профілю гравця -->
     <div class="profile-modal" id="profileModal">
@@ -362,7 +437,7 @@
                 <div class="bio" id="pmBio"></div>
             </div>
             <div class="profile-modal-actions">
-                <button class="pm-close" id="pmClose" title="Закрити">✕</button>
+                <button class="pm-close" id="pmClose" title="Закрити">← Назад</button>
                 <button class="pm-like" id="pmLike" title="Лайкнути">❤️</button>
             </div>
         </div>
@@ -802,6 +877,18 @@
             await pollNow();
             setInterval(pollNow, POLL_MS);
         }
+
+        // Інфо-панель
+        const infoPanel = document.getElementById('infoPanel');
+        document.getElementById('infoBtn').addEventListener('click', function () {
+            infoPanel.classList.add('open');
+        });
+        document.getElementById('infoClose').addEventListener('click', function () {
+            infoPanel.classList.remove('open');
+        });
+        infoPanel.addEventListener('click', function (e) {
+            if (e.target === infoPanel) infoPanel.classList.remove('open');
+        });
 
         show(els.loading);
         init().catch(function (err) {
