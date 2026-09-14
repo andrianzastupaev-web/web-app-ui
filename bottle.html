@@ -349,6 +349,17 @@
 
         let lastRenderKey = '';
 
+        function ratingBadge(rating) {
+            if (!rating || rating < 10) return '🤍';
+            if (rating < 25) return '💙';
+            if (rating < 50) return '💚';
+            if (rating < 100) return '💛';
+            if (rating < 200) return '🧡';
+            if (rating < 400) return '❤️';
+            if (rating < 800) return '💜';
+            return '💖';
+        }
+
         function renderPlayers() {
             const list = game.players;
             const key = list.join(',') + '|' + (game.target || '') + '|' + (game.spinner || '');
@@ -373,11 +384,40 @@
 
                 const p = profiles[uid];
                 const photo = p && (p.photo_url || p.photo_url2);
+                const rating = p ? (p.rating || 0) : 0;
+                const badge = ratingBadge(rating);
                 div.innerHTML =
                     '<div class="avatar">' + (photo
                         ? '<img src="' + photo + '" alt="">'
                         : '👤') + '</div>'
-                    + '<div class="pname">' + nameOf(uid) + '</div>';
+                    + '<div class="pname">' + badge + ' ' + nameOf(uid) + '</div>';
+
+                // Тап по аватарці → лайкнути профіль (не себе)
+                if (uid !== tgUser.id) {
+                    div.addEventListener('click', async function () {
+                        try {
+                            sb.from('reactions').upsert({
+                                from_user: tgUser.id,
+                                to_user: uid,
+                                kind: 'like',
+                                notified: false
+                            }, { onConflict: 'from_user,to_user' }).then(function () {}, console.error);
+                            sb.from('users').select('rating').eq('user_id', uid).maybeSingle()
+                                .then(function (r) {
+                                    const newRating = ((r.data && r.data.rating) || 0) + 1;
+                                    sb.from('users').update({ rating: newRating })
+                                        .eq('user_id', uid).then(function () {}, console.error);
+                                });
+                            try { tg?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
+                            banner.textContent = '❤️ Ти лайкнув ' + nameOf(uid) + '!';
+                            banner.classList.add('shown');
+                            setTimeout(function () { banner.classList.remove('shown'); }, 2000);
+                        } catch (err) {
+                            console.error(err);
+                        }
+                    });
+                }
+
                 els.playersLayer.appendChild(div);
             });
         }
@@ -445,6 +485,19 @@
                         status: 'result',
                         action: act
                     }).eq('id', game.id).eq('status', 'spinning');
+
+                    // Оновлюємо рейтинг цілі
+                    const ratingChanges = { kiss: 2, heart: 1, dislike: -1, tomato: -2 };
+                    const change = ratingChanges[act] || 0;
+                    if (change !== 0 && game.target) {
+                        sb.from('users').select('rating').eq('user_id', game.target).maybeSingle()
+                            .then(function (r) {
+                                const newRating = Math.max(0, ((r.data && r.data.rating) || 0) + change);
+                                sb.from('users').update({ rating: newRating })
+                                    .eq('user_id', game.target).then(function () {}, console.error);
+                            });
+                    }
+
                     pollNow();
                 } catch (err) {
                     console.error(err);
