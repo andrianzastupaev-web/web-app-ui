@@ -253,10 +253,10 @@
                 podium.appendChild(div);
             });
 
-            // Список 4-10
+            // Список 4-5 (тільки 2 рядки)
             const list = document.getElementById('topList');
             list.innerHTML = '';
-            users.slice(3, 10).forEach((u, i) => {
+            users.slice(3, 5).forEach((u, i) => {
                 const row = document.createElement('div');
                 row.className = 'top-row' + (tgUser && u.user_id === tgUser.id ? ' me' : '');
                 const photo = u.photo_url || u.photo_url2;
