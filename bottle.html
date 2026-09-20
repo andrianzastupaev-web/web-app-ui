@@ -269,19 +269,34 @@
             overflow-y: auto;
             padding: 16px;
         }
-        .info-panel-card h3 { font-size: 16px; margin-bottom: 10px; }
-        .info-panel-card .rule { font-size: 12.5px; color: #c9c9da; line-height: 1.5; margin-bottom: 6px; }
-        .info-panel-card .rating-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px 0;
-            border-bottom: 1px solid #2a2a40;
-            font-size: 12.5px;
+        .info-panel-card h3 { font-size: 16px; margin-bottom: 8px; }
+
+        /* Таблиці в інфо-панелі */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        .info-panel-card .rating-row:last-child { border-bottom: none; }
-        .info-panel-card .rating-row .badge { font-size: 16px; }
-        .info-panel-card .rating-row .pts { color: #8a8aa0; font-size: 11px; }
+        .info-table td {
+            padding: 7px 6px;
+            font-size: 13px;
+            color: #c9c9da;
+            border-bottom: 1px solid #2a2a40;
+            vertical-align: middle;
+        }
+        .info-table tr:last-child td { border-bottom: none; }
+        .info-table .step {
+            width: 28px;
+            height: 28px;
+            text-align: center;
+            font-weight: 700;
+            color: #7c3aed;
+            font-size: 14px;
+        }
+        .info-table .badge { font-size: 18px; width: 34px; text-align: center; }
+        .info-table .act { font-weight: 600; color: #e0e0e8; }
+        .info-table .pts { text-align: right; font-size: 12px; color: #8a8aa0; white-space: nowrap; }
+        .info-table .pts.plus { color: #4caf6e; font-weight: 700; }
+        .info-table .pts.minus { color: #e05252; font-weight: 700; }
         .info-btn {
             padding: 5px 12px;
             border: 1px solid #33334a;
@@ -317,7 +332,7 @@
 <body>
     <div class="topbar">
         <h1>🍾 Пляшечка</h1>
-        <button class="info-btn" id="infoBtn">ℹ️ Правила</button>
+        <button class="info-btn" id="infoBtn">ℹ️ Гра</button>
         <a class="back" href="index.html">← Профіль</a>
     </div>
 
@@ -395,34 +410,37 @@
     <!-- Інфо-панель гри -->
     <div class="info-panel" id="infoPanel">
         <div class="info-panel-card">
-            <h3>🍾 Як грати в Пляшечку</h3>
-            <div class="rule">• Тисни «Крутити» — пляшечка обертається</div>
-            <div class="rule">• Вона вказує на випадкового гравця</div>
-            <div class="rule">• Ти обираєш дію: 😘 ❤️ 👎 🍅</div>
-            <div class="rule">• Далі крутить той, на кого вказала пляшечка</div>
-            <div class="rule">• Тисни на аватарку — переглянеш профіль</div>
+            <h3>🍾 Як грати</h3>
+            <table class="info-table">
+                <tr><td class="step">1</td><td>Тисни «🍾 Крутити»</td></tr>
+                <tr><td class="step">2</td><td>Пляшечка вкаже на гравця</td></tr>
+                <tr><td class="step">3</td><td>Обери дію: 😘 ❤️ 👎 🍅</td></tr>
+                <tr><td class="step">4</td><td>Далі крутить той, на кого вказала</td></tr>
+                <tr><td class="step">5</td><td>Тапни аватарку → профіль + ❤️</td></tr>
+            </table>
 
-            <h3 style="margin-top:14px">📊 Рейтинг</h3>
-            <div class="rule">
-                😘 Поцілунок <b style="color:#4caf6e">+2</b> •
-                ❤️ Сердечко <b style="color:#4caf6e">+1</b> •
-                👎 Дизлайк <b style="color:#e05252">−1</b> •
-                🍅 Помідор <b style="color:#e05252">−2</b> •
-                ❤️ Лайк <b style="color:#4caf6e">+1</b>
-            </div>
+            <h3 style="margin-top:14px">📊 Бали за дії</h3>
+            <table class="info-table">
+                <tr><td class="act">😘 Поцілунок</td><td class="pts plus">+2</td></tr>
+                <tr><td class="act">❤️ Сердечко</td><td class="pts plus">+1</td></tr>
+                <tr><td class="act">❤️ Лайк профілю</td><td class="pts plus">+1</td></tr>
+                <tr><td class="act">👎 Дизлайк</td><td class="pts minus">−1</td></tr>
+                <tr><td class="act">🍅 Помідор</td><td class="pts minus">−2</td></tr>
+            </table>
 
-            <div style="margin-top:10px">
-                <div class="rating-row"><span class="badge">🤍</span> Новачок <span class="pts">0–9</span></div>
-                <div class="rating-row"><span class="badge">💙</span> Приємний <span class="pts">10–24</span></div>
-                <div class="rating-row"><span class="badge">💚</span> Цікавий <span class="pts">25–49</span></div>
-                <div class="rating-row"><span class="badge">💛</span> Взаємний <span class="pts">50–99</span></div>
-                <div class="rating-row"><span class="badge">🧡</span> Гарячий <span class="pts">100–199</span></div>
-                <div class="rating-row"><span class="badge">❤️</span> Популярний <span class="pts">200–399</span></div>
-                <div class="rating-row"><span class="badge">💜</span> Легенда <span class="pts">400–799</span></div>
-                <div class="rating-row"><span class="badge">💖</span> ЗІРКА <span class="pts">800+</span></div>
-            </div>
+            <h3 style="margin-top:14px">🏆 Рівні рейтингу</h3>
+            <table class="info-table">
+                <tr><td class="badge">🤍</td><td>Новачок</td><td class="pts">0–9</td></tr>
+                <tr><td class="badge">💙</td><td>Приємний</td><td class="pts">10–24</td></tr>
+                <tr><td class="badge">💚</td><td>Цікавий</td><td class="pts">25–49</td></tr>
+                <tr><td class="badge">💛</td><td>Взаємний</td><td class="pts">50–99</td></tr>
+                <tr><td class="badge">🧡</td><td>Гарячий</td><td class="pts">100–199</td></tr>
+                <tr><td class="badge">❤️</td><td>Популярний</td><td class="pts">200–399</td></tr>
+                <tr><td class="badge">💜</td><td>Легенда</td><td class="pts">400–799</td></tr>
+                <tr><td class="badge">💖</td><td>ЗІРКА</td><td class="pts">800+</td></tr>
+            </table>
 
-            <button class="btn" id="infoClose" style="margin-top:12px">← Назад до гри</button>
+            <button class="btn" id="infoClose" style="margin-top:14px">← Назад до гри</button>
         </div>
     </div>
 
