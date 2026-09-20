@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ТОП — Circles</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; touch-action: manipulation; }
+
+        body {
+            min-height: 100vh;
+            background: #15151f;
+            color: #fff;
+            padding: 16px 16px calc(88px + env(safe-area-inset-bottom));
+            overflow-x: hidden;
+        }
+
+        .header { text-align: center; margin-bottom: 16px; }
+        .header .logo { font-size: 36px; }
+        .header h1 {
+            font-size: 24px; font-weight: 800;
+            background: linear-gradient(90deg, #ffd166, #ff7eb3, #7bdff2);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header p { font-size: 13px; color: #8a8aa0; margin-top: 2px; }
+
+        /* ТОП-3 */
+        .podium {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .podium-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .podium-item .avatar {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 700;
+            overflow: hidden;
+        }
+        .podium-item img { width: 100%; height: 100%; object-fit: cover; }
+        .podium-item .medal { font-size: 20px; }
+        .podium-item .name { font-size: 12px; font-weight: 700; }
+        .podium-item .score { font-size: 13px; color: #ffd166; font-weight: 700; }
+        .podium-item .bar {
+            width: 100%;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.3);
+        }
+        .p1 .avatar { border-color: #ffd166; width: 64px; height: 64px; }
+        .p1 .bar { height: 56px; background: linear-gradient(180deg, #ffd166, #b8860b); }
+        .p2 .avatar { border-color: #c0c0c0; }
+        .p2 .bar { height: 42px; background: linear-gradient(180deg, #e0e0e0, #808080); }
+        .p3 .avatar { border-color: #cd7f32; }
+        .p3 .bar { height: 32px; background: linear-gradient(180deg, #cd7f32, #8b4513); }
+
+        /* Список */
+        .top-list {
+            background: #1d1d2e;
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .top-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #2a2a40;
+        }
+        .top-row:last-child { border-bottom: none; }
+        .top-row .pos {
+            width: 28px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #8a8aa0;
+            text-align: center;
+        }
+        .top-row .avatar {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #2a2a40;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .top-row .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .top-row .info { flex: 1; }
+        .top-row .info .name { font-size: 14px; font-weight: 600; }
+        .top-row .info .rating-badge { font-size: 12px; }
+        .top-row .score {
+            font-size: 15px;
+            font-weight: 800;
+            color: #ffd166;
+        }
+        .top-row.me {
+            background: rgba(124, 58, 237, 0.15);
+            border-left: 3px solid #7c3aed;
+        }
+
+        /* Моя позиція */
+        .my-position {
+            background: linear-gradient(120deg, #2d1b4e, #1d1d2e);
+            border: 1px solid #7c3aed;
+            border-radius: 14px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .my-position .label { font-size: 13px; color: #a8a8bd; }
+        .my-position .pos { font-size: 22px; font-weight: 800; }
+        .my-position .score { font-size: 18px; font-weight: 700; color: #ffd166; }
+
+        /* Таймер */
+        .timer {
+            text-align: center;
+            font-size: 12px;
+            color: #6d6d84;
+            margin-bottom: 14px;
+        }
+        .timer .clock { font-size: 16px; }
+
+        /* Нижнє меню */
+        .bottom-nav {
+            position: fixed;
+            left: 0; right: 0; bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+            background: #101018;
+            border-top: 1px solid #26263a;
+            z-index: 10;
+        }
+        .bottom-nav a {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            text-decoration: none;
+            background: #1d1d2e;
+        }
+        .bottom-nav a.current { background: #35355a; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">🏆</div>
+        <h1>Circles TOP</h1>
+        <p>🔥 Найпопулярніші цього тижня</p>
+    </div>
+
+    <!-- Подіум ТОП-3 -->
+    <div class="podium" id="podium"></div>
+
+    <!-- Список 4-10 -->
+    <div class="top-list" id="topList"></div>
+
+    <!-- Моя позиція -->
+    <div class="my-position" id="myPosition" style="display:none;">
+        <div>
+            <div class="label">👤 Твоя позиція</div>
+            <div class="pos" id="myPos">—</div>
+        </div>
+        <div style="text-align:right;">
+            <div class="label">Рейтинг</div>
+            <div class="score" id="myScore">0</div>
+        </div>
+    </div>
+
+    <!-- Таймер тижня -->
+    <div class="timer" id="weekTimer"></div>
+
+    <nav class="bottom-nav">
+        <a href="search.html?v=15" title="Пошук анкет">🔍</a>
+        <a href="index.html" title="Мій профіль">👤</a>
+        <a href="bottle.html?v=27" title="Пляшечка">🍾</a>
+    </nav>
+
+    <script>
+        const SUPABASE_URL = 'https://gronesprghcbjzbfktay.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyb25lc3ByZ2hjYmp6YmZrdGF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyMjc1NjAsImV4cCI6MjEwNDgwMzU2MH0.tBMickoPY4Wu2xNTm8JY4QMFxrWtelZv9kerxjiyyo8';
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const tg = window.Telegram?.WebApp;
+        const tgUser = tg?.initDataUnsafe?.user;
+        if (tg) { tg.ready(); tg.expand(); }
+
+        function ratingBadge(r) {
+            if (!r || r < 10) return '🤍';
+            if (r < 25) return '💙';
+            if (r < 50) return '💚';
+            if (r < 100) return '💛';
+            if (r < 200) return '🧡';
+            if (r < 400) return '❤️';
+            if (r < 800) return '💜';
+            return '💖';
+        }
+
+        async function load() {
+            const { data: users, error } = await sb.from('users')
+                .select('user_id, first_name, age, rating, photo_url, photo_url2, is_approved')
+                .eq('is_approved', true)
+                .order('rating', { ascending: false })
+                .limit(50);
+
+            if (error || !users) return;
+
+            // Подіум ТОП-3
+            const podium = document.getElementById('podium');
+            const medals = ['🥇', '🥈', '🥉'];
+            const classes = ['p2', 'p1', 'p3']; // 2-й, 1-й, 3-й (по висоті)
+            const order = users.length >= 3 ? [1, 0, 2] : users.map((_, i) => i).slice(0, 3);
+
+            podium.innerHTML = '';
+            order.forEach(idx => {
+                const u = users[idx];
+                if (!u) return;
+                const div = document.createElement('div');
+                div.className = 'podium-item ' + classes[order.indexOf(idx)];
+                const photo = u.photo_url || u.photo_url2;
+                div.innerHTML =
+                    '<div class="medal">' + (medals[idx] || '') + '</div>' +
+                    '<div class="avatar">' + (photo ? '<img src="' + photo + '">' : '👤') + '</div>' +
+                    '<div class="name">' + (u.first_name || '—') + '</div>' +
+                    '<div class="score">' + (u.rating || 0) + '</div>' +
+                    '<div class="bar">' + (idx + 1) + '</div>';
+                podium.appendChild(div);
+            });
+
+            // Список 4-10
+            const list = document.getElementById('topList');
+            list.innerHTML = '';
+            users.slice(3, 10).forEach((u, i) => {
+                const row = document.createElement('div');
+                row.className = 'top-row' + (tgUser && u.user_id === tgUser.id ? ' me' : '');
+                const photo = u.photo_url || u.photo_url2;
+                row.innerHTML =
+                    '<div class="pos">' + (i + 4) + '</div>' +
+                    '<div class="avatar">' + (photo ? '<img src="' + photo + '">' : '👤') + '</div>' +
+                    '<div class="info"><div class="name">' + ratingBadge(u.rating) + ' ' + (u.first_name || '—') + '</div></div>' +
+                    '<div class="score">' + (u.rating || 0) + '</div>';
+                list.appendChild(row);
+            });
+
+            // Моя позиція
+            if (tgUser) {
+                const myIdx = users.findIndex(u => u.user_id === tgUser.id);
+                const me = document.getElementById('myPosition');
+                if (myIdx >= 0) {
+                    me.style.display = 'flex';
+                    document.getElementById('myPos').textContent = '#' + (myIdx + 1);
+                    document.getElementById('myScore').textContent = users[myIdx].rating || 0;
+                } else {
+                    me.style.display = 'flex';
+                    document.getElementById('myPos').textContent = '—';
+                    document.getElementById('myScore').textContent = '0';
+                }
+            }
+
+            // Таймер до понеділка
+            updateTimer();
+            setInterval(updateTimer, 60000);
+        }
+
+        function updateTimer() {
+            const now = new Date();
+            const day = now.getDay(); // 0=Нд, 1=Пн
+            const daysUntilMonday = day === 0 ? 1 : 8 - day;
+            const nextMonday = new Date(now);
+            nextMonday.setDate(now.getDate() + daysUntilMonday);
+            nextMonday.setHours(0, 0, 0, 0);
+            const diff = nextMonday - now;
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            document.getElementById('weekTimer').innerHTML =
+                '⏳ До кінця тижня: <b>' + d + ' дн ' + h + ' год</b>';
+        }
+
+        load();
+    </script>
+</body>
+</html>
