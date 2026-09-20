@@ -332,7 +332,7 @@
 <body>
     <div class="topbar">
         <h1>🍾 Пляшечка</h1>
-        <button class="info-btn" id="infoBtn">ℹ️ Гра</button>
+        <button class="info-btn" id="infoBtn">ℹ️ Правила </button>
         <a class="back" href="index.html">← Профіль</a>
     </div>
 
@@ -412,36 +412,34 @@
         <div class="info-panel-card">
             <h3>🍾 Як грати</h3>
             <table class="info-table">
-                <tr><td class="step">1</td><td>Тисни «🍾 Крутити»</td></tr>
-                <tr><td class="step">2</td><td>Пляшечка вкаже на гравця</td></tr>
-                <tr><td class="step">3</td><td>Обери дію: 😘 ❤️ 👎 🍅</td></tr>
-                <tr><td class="step">4</td><td>Далі крутить той, на кого вказала</td></tr>
-                <tr><td class="step">5</td><td>Тапни аватарку → профіль + ❤️</td></tr>
+                <tr><td class="step">1</td><td>Крути пляшечку</td></tr>
+                <tr><td class="step">2</td><td>Вона вкаже на гравця</td></tr>
+                <tr><td class="step">3</td><td>Обери дію</td></tr>
+                <tr><td class="step">4</td><td>Тапни аватар → профіль</td></tr>
             </table>
 
-            <h3 style="margin-top:14px">📊 Бали за дії</h3>
+            <h3 style="margin-top:12px">📊 Бали</h3>
             <table class="info-table">
-                <tr><td class="act">😘 Поцілунок</td><td class="pts plus">+2</td></tr>
-                <tr><td class="act">❤️ Сердечко</td><td class="pts plus">+1</td></tr>
-                <tr><td class="act">❤️ Лайк профілю</td><td class="pts plus">+1</td></tr>
-                <tr><td class="act">👎 Дизлайк</td><td class="pts minus">−1</td></tr>
-                <tr><td class="act">🍅 Помідор</td><td class="pts minus">−2</td></tr>
+                <tr><td class="act">😘</td><td class="pts plus">+2</td><td class="act">👎</td><td class="pts minus">−1</td></tr>
+                <tr><td class="act">❤️</td><td class="pts plus">+1</td><td class="act">🍅</td><td class="pts minus">−2</td></tr>
             </table>
 
-            <h3 style="margin-top:14px">🏆 Рівні рейтингу</h3>
+            <h3 style="margin-top:12px">🏆 Рівні</h3>
             <table class="info-table">
-                <tr><td class="badge">🤍</td><td>Новачок</td><td class="pts">0–9</td></tr>
-                <tr><td class="badge">💙</td><td>Приємний</td><td class="pts">10–24</td></tr>
-                <tr><td class="badge">💚</td><td>Цікавий</td><td class="pts">25–49</td></tr>
-                <tr><td class="badge">💛</td><td>Взаємний</td><td class="pts">50–99</td></tr>
-                <tr><td class="badge">🧡</td><td>Гарячий</td><td class="pts">100–199</td></tr>
-                <tr><td class="badge">❤️</td><td>Популярний</td><td class="pts">200–399</td></tr>
-                <tr><td class="badge">💜</td><td>Легенда</td><td class="pts">400–799</td></tr>
+                <tr><td class="badge">🤍</td><td>Новачок</td><td class="pts">0+</td></tr>
+                <tr><td class="badge">💙</td><td>Приємний</td><td class="pts">10+</td></tr>
+                <tr><td class="badge">💚</td><td>Цікавий</td><td class="pts">25+</td></tr>
+                <tr><td class="badge">💛</td><td>Взаємний</td><td class="pts">50+</td></tr>
+                <tr><td class="badge">🧡</td><td>Гарячий</td><td class="pts">100+</td></tr>
+                <tr><td class="badge">❤️</td><td>Популярний</td><td class="pts">200+</td></tr>
+                <tr><td class="badge">💜</td><td>Легенда</td><td class="pts">400+</td></tr>
                 <tr><td class="badge">💖</td><td>ЗІРКА</td><td class="pts">800+</td></tr>
             </table>
 
-            <button class="btn" id="infoClose" style="margin-top:14px">← Назад до гри</button>
-            <a href="top.html" style="display:block;text-align:center;padding:11px;margin-top:8px;border-radius:10px;background:#2a2a40;color:#ffd166;font-weight:700;text-decoration:none;font-size:14px;">🏆 ТОП учасників</a>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+                <button class="btn" id="infoClose" style="flex:1;margin-top:0;">← Гра</button>
+                <a href="top.html" style="flex:1;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#2a2a40;color:#ffd166;font-weight:700;text-decoration:none;font-size:14px;">🏆 ТОП</a>
+            </div>
         </div>
     </div>
 
