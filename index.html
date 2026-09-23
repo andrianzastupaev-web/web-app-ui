@@ -265,25 +265,6 @@
             text-align: center;
             text-decoration: none;
         }
-        .help-btn {
-            display: block;
-            width: 100%;
-            margin-top: 6px;
-            padding: 10px;
-            border: 1px solid #33334a;
-            border-radius: 10px;
-            background: transparent;
-            color: #8a8aa0;
-            font-size: 13px;
-            font-weight: 600;
-            text-align: center;
-            cursor: pointer;
-        }
-        /* Довідка */
-        .help h4 { font-size: 13px; margin: 12px 0 4px; color: #ffd166; }
-        .help h4:first-child { margin-top: 0; }
-        .help p { font-size: 13px; color: #d8d8e4; line-height: 1.5; }
-
         /* Нижнє меню — просте й стабільне */
         .bottom-nav {
             position: fixed;
@@ -350,42 +331,8 @@
                 </div>
             </div>
         </div>
-        <a class="edit-btn" href="edit.html?v=10">Редагувати анкету</a>
+        <a class="edit-btn" href="edit.html?v=10"> Редагувати анкету</a>
         <a class="support-btn" href="top.html">🏆 ТОП учасників</a>
-        <button class="help-btn" id="helpBtn">📖 Як користуватися</button>
-    <!-- Довідка: правила та розділи -->
-    <div class="gift-modal" id="helpModal">
-        <div class="gift-modal-card">
-            <h3>📖 Як користуватися</h3>
-            <div class="help">
-                <h4>👤 Профіль</h4>
-                <p>Твоя анкета: до 2 фото, ім'я, вік, місто та пара слов про себе. Кнопка ✏️ — редагувати будь-коли. Нові анкети перевіряє адмін, після чого тебе бачать інші. 🎁 на фото — твої подарунки: тапни, щоб подивитись, від кого.</p>
-
-                <h4>🔍 Пошук</h4>
-                <p>Гортай анкети: ❤️ — сподобалось, ❌ — пропустити. ⚙️ Фільтр — стать, вік і мета знакомства. 🎁 — подарунок за рейтинг. Іконка ⚠️ — поскаржитись на анкету. Якщо твій ❤️ відповість взаємністю — отримаєш контакт для спілкування 💕</p>
-
-                <h4>🍾 Пляшечка</h4>
-                <p>Гра до 4 осіб за столом; коли стіл повний — створюється новий. Тисни «Крутити» — пляшечка вкаже на гравця, обирай дію: 😘 ❤️ 👎 🍅. Тапни аватарку — побачиш анкету гравця й лайкнеш. Закрив додаток — гра сама тебе випустить.</p>
-
-                <h4>⭐ Рейтинг</h4>
-                <p>Бали: 😘 +2, ❤️ +1, лайк +1, 👎 −1, 🍅 −2. Рівні: 🤍 0–9, 💙 10+, 💚 25+, 💛 50+, 🧡 100+, ❤️ 200+, 💜 400+, 💖 800+. Щопонеділка о 00:00 рейтинг скидається — новий тиждень, рівні шанси для всіх.</p>
-
-                <h4>🏆 ТОП</h4>
-                <p>Найпопулярніші цього тижня: подіум топ-3, позиції до 5 та твоє місце в рейтингу.</p>
-
-                <h4>🎁 Подарунки</h4>
-                <p>🌹 ⭐10 • 🍫 ⭐25 • 🧸 ⭐50 • 💍 ⭐100. Рейтинг заробляй у грі й лайками — витрачай на подарунки. Той, хто отримав, одержує бонус рейтингу і повідомлення в чат.</p>
-
-                <h4>💬 Сповіщення в чаті</h4>
-                <p>«Ви сподобались» — тисни ❤️ для взаємності або ❌, щоб пропустити. Взаємна симпатія зникає через 1 хвилину — встигни натиснути «Написати». Щоночі о 00:00 усі сповіщення очищаються, чат лишається чистим.</p>
-
-                <h4>🛡 Безпека</h4>
-                <p>Усі анкети модерується адміном. Скаргу ⚠️ розглядає адмін: за порушенням анкету приховується, а її власник отримує повідомлення.</p>
-            </div>
-            <button class="gm-close" id="helpClose">Закрити</button>
-        </div>
-    </div>
-
     <!-- Подарунки: хто і коли -->
     <div class="gift-modal" id="giftModal">
         <div class="gift-modal-card">
@@ -545,7 +492,7 @@
         function lockScroll() { document.body.classList.add('no-scroll'); }
 
         function anyModalOpen() {
-            return ['giftModal', 'pfModal', 'helpModal'].some(function (id) {
+            return ['giftModal', 'pfModal'].some(function (id) {
                 return document.getElementById(id).style.display === 'flex';
             });
         }
@@ -621,22 +568,6 @@
             if (e.target === this) {
                 this.style.display = 'none';
                 document.getElementById('giftModal').style.display = 'none';
-                unlockIfClosed();
-            }
-        });
-
-        // === 📖 Довідка ===
-        document.getElementById('helpBtn').addEventListener('click', function () {
-            document.getElementById('helpModal').style.display = 'flex';
-            lockScroll();
-        });
-        document.getElementById('helpClose').addEventListener('click', function () {
-            document.getElementById('helpModal').style.display = 'none';
-            unlockIfClosed();
-        });
-        document.getElementById('helpModal').addEventListener('click', function (e) {
-            if (e.target === this) {
-                this.style.display = 'none';
                 unlockIfClosed();
             }
         });
