@@ -280,7 +280,7 @@
         <div class="emoji">📝</div>
         <h2>Спочатку — анкета</h2>
         <p>Заповни свою анкету, щоб почати знайомитися</p>
-        <a class="cta" href="edit.html?v=10">Заповнити анкету</a>
+        <a class="cta" href="edit.html?v=11">Заповнити анкету</a>
     </div>
 
     <div class="placeholder" id="noMore">
@@ -369,7 +369,7 @@
     <nav class="bottom-nav">
         <a href="search.html?v=16" class="current" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
-        <a href="bottle.html?v=30" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=31" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -639,8 +639,8 @@
             }
 
             const { data: me } = await sb.from('users')
-                .select('user_id').eq('user_id', tgUser.id).maybeSingle();
-            if (!me) {
+                .select('user_id, first_name').eq('user_id', tgUser.id).maybeSingle();
+            if (!me || !me.first_name) {
                 show(els.needRegister);
                 return;
             }
