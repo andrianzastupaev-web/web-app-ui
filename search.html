@@ -101,7 +101,7 @@
             border: none;
             border-radius: 10px;
             background: rgba(0, 0, 0, 0.6);
-            font-size: 17px;
+            display: flex; align-items: center; justify-content: center;
             cursor: pointer;
             z-index: 2;
         }
@@ -289,7 +289,15 @@
                 <div class="photo-fallback" id="cFallback">🙂</div>
                 <div class="photo-dots" id="cDots"></div>
                 <span class="badge" id="cBadge"></span>
-                <button class="report-btn" id="btnReport" title="Поскаржитись">🚩</button>
+                <button class="report-btn" id="btnReport" title="Поскаржитись">
+                    <svg width="21" height="21" viewBox="0 0 24 24" fill="none"
+                         stroke="rgba(255,255,255,0.92)" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </button>
                 <div class="overlay">
                     <div class="name" id="cName"></div>
                     <div class="meta" id="cMeta"></div>
@@ -305,7 +313,17 @@
 
     <div class="report-modal" id="reportModal">
         <div class="report-card">
-            <h3>🚩 Поскаржитись на анкету</h3>
+            <h3>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="rgba(255,255,255,0.92)" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round"
+                     style="vertical-align: -3px; margin-right: 6px;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                Поскаржитись на анкету
+            </h3>
             <button data-reason="spam">🚫 Спам або реклама</button>
             <button data-reason="nude">🔞 Непристойні фото</button>
             <button data-reason="abuse">🤬 Образи або агресія</button>
