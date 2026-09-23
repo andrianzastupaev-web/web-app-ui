@@ -94,6 +94,77 @@
         .btn-dislike { background: #2a2a40; }
         .btn-like { background: #c0265c; }
 
+        /* Скарга на анкету */
+        .report-btn {
+            position: absolute; top: 10px; right: 10px;
+            width: 38px; height: 38px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            z-index: 2;
+        }
+        .gift-btn {
+            position: absolute; top: 10px; right: 54px;
+            width: 38px; height: 38px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px;
+            cursor: pointer;
+            z-index: 2;
+        }
+        .report-modal, .gift-modal {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 40;
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .report-card, .gift-card {
+            width: 100%; max-width: 340px;
+            background: #1d1d2e;
+            border-radius: 16px;
+            padding: 16px;
+        }
+        .report-card h3, .gift-card h3 { font-size: 15px; margin-bottom: 10px; }
+        .report-card button, .gift-card button {
+            display: block; width: 100%;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: none;
+            border-radius: 12px;
+            background: #2a2a40;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+        }
+        .report-card button.cancel, .gift-card button.cancel {
+            background: transparent; text-align: center; color: #8a8aa0;
+        }
+        .gift-balance {
+            font-size: 12px; color: #a8a8bd;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .gift-card .price { float: right; color: #ffd166; }
+        .toast {
+            position: fixed; left: 50%; bottom: 110px;
+            transform: translateX(-50%);
+            background: #2a2a40;
+            padding: 11px 18px;
+            border-radius: 12px;
+            font-size: 13px; font-weight: 600;
+            z-index: 50;
+            display: none;
+            white-space: nowrap;
+        }
+
 
         /* Нижнє меню */
         .bottom-nav {
@@ -237,6 +308,16 @@
                 <div class="photo-fallback" id="cFallback">🙂</div>
                 <div class="photo-dots" id="cDots"></div>
                 <span class="badge" id="cBadge"></span>
+                <button class="gift-btn" id="btnGift" title="Подарувати">🎁</button>
+                <button class="report-btn" id="btnReport" title="Поскаржитись">
+                    <svg width="21" height="21" viewBox="0 0 24 24" fill="none"
+                         stroke="rgba(255,255,255,0.92)" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </button>
                 <div class="overlay">
                     <div class="name" id="cName"></div>
                     <div class="meta" id="cMeta"></div>
@@ -250,10 +331,45 @@
         </div>
     </div>
 
+    <div class="report-modal" id="reportModal">
+        <div class="report-card">
+            <h3>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="rgba(255,255,255,0.92)" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round"
+                     style="vertical-align: -3px; margin-right: 6px;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                Поскаржитись на анкету
+            </h3>
+            <button data-reason="spam">🚫 Спам або реклама</button>
+            <button data-reason="nude">🔞 Непристойні фото</button>
+            <button data-reason="abuse">🤬 Образи або агресія</button>
+            <button data-reason="fake">🎭 Фейк / шахрайство</button>
+            <button class="cancel" id="reportCancel">Скасувати</button>
+        </div>
+    </div>
+
+    <div class="gift-modal" id="giftModal">
+        <div class="gift-card">
+            <h3>🎁 Подарувати</h3>
+            <div class="gift-balance" id="giftBalance">⭐ Твій рейтинг: —</div>
+            <button data-gift="rose">🌹 Троянда <span class="price">⭐10</span></button>
+            <button data-gift="choco">🍫 Шоколадка <span class="price">⭐25</span></button>
+            <button data-gift="teddy">🧸 Ведмедик <span class="price">⭐50</span></button>
+            <button data-gift="ring">💍 Кільце <span class="price">⭐100</span></button>
+            <button class="cancel" id="giftCancel">Скасувати</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
     <nav class="bottom-nav">
-        <a href="search.html?v=15" class="current" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=16" class="current" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
-        <a href="bottle.html?v=25" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=30" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -317,6 +433,26 @@
         let busy = false;
         let photoIdx = 0;
 
+        // === 🎁 Подарунки та 🚀 буст ===
+        const GIFT_PRICES = { rose: 10, choco: 25, teddy: 50, ring: 100 };
+        const GIFT_BONUS = { rose: 2, choco: 5, teddy: 10, ring: 20 };
+        const GIFT_EMOJI = { rose: '🌹', choco: '🍫', teddy: '🧸', ring: '💍' };
+        let myRating = 0;
+        let giftCounts = {};
+        const BOOST_MS = 30 * 60 * 1000;
+
+        function isBoosted(u) {
+            return !!(u.boosted_at && Date.now() - new Date(u.boosted_at).getTime() < BOOST_MS);
+        }
+
+        function giftBadgeStr(uid) {
+            const g = giftCounts[uid];
+            if (!g) return '';
+            return ' ' + Object.keys(g).map(function (k) {
+                return (GIFT_EMOJI[k] || '🎁') + '×' + g[k];
+            }).join(' ');
+        }
+
         function cardPhotos(u) {
             return [u.photo_url, u.photo_url2].filter(Boolean);
         }
@@ -336,8 +472,19 @@
                 els.fallback.style.display = 'flex';
             }
 
-            els.name.textContent = (u.first_name || 'Учасник') + (u.age ? ', ' + u.age : '');
-            els.meta.textContent = u.city ? '📍 ' + u.city : '';
+            function ratingBadge(r) {
+                if (!r || r < 10) return '🤍';
+                if (r < 25) return '💙';
+                if (r < 50) return '💚';
+                if (r < 100) return '💛';
+                if (r < 200) return '🧡';
+                if (r < 400) return '❤️';
+                if (r < 800) return '💜';
+                return '💖';
+            }
+
+            els.name.textContent = ratingBadge(u.rating) + ' ' + (u.first_name || 'Учасник') + (u.age ? ', ' + u.age : '');
+            els.meta.textContent = (isBoosted(u) ? '🚀 ' : '') + (u.city ? '📍 ' + u.city : '') + giftBadgeStr(u.user_id);
             els.bio.textContent = u.bio ? '“' + u.bio + '”' : '';
             els.bio.style.display = u.bio ? 'block' : 'none';
             const showName = u.username && u.show_username !== false;
@@ -385,6 +532,17 @@
                 kind: kind,
                 notified: false
             }, { onConflict: 'from_user,to_user' }).then(function () {}, console.error);
+
+            // ❤️ дає +1 рейтинг
+            if (kind === 'like') {
+                sb.from('users').select('rating').eq('user_id', current.user_id).maybeSingle()
+                    .then(function (r) {
+                        const newRating = ((r.data && r.data.rating) || 0) + 1;
+                        sb.from('users').update({ rating: newRating })
+                            .eq('user_id', current.user_id).then(function () {}, console.error);
+                    });
+            }
+
             try { tg?.HapticFeedback?.notificationOccurred(kind === 'like' ? 'success' : 'warning'); } catch (e) {}
 
             pos += 1;
@@ -423,6 +581,7 @@
                 .select('*').eq('user_id', tgUser.id).maybeSingle();
             const me = meRes.data;
             if (me) {
+                myRating = me.rating || 0;
                 myFilters = {
                     age_min: me.filter_age_min || 16,
                     age_max: me.filter_age_max || 99,
@@ -430,6 +589,18 @@
                     intent: me.filter_intent || 'any'
                 };
                 fillFilterPanel();
+            }
+
+            // Подарунки учасників (для бейджів на картках)
+            try {
+                const gr = await sb.from('gifts').select('to_user, gift');
+                giftCounts = {};
+                (gr.data || []).forEach(function (x) {
+                    giftCounts[x.to_user] = giftCounts[x.to_user] || {};
+                    giftCounts[x.to_user][x.gift] = (giftCounts[x.to_user][x.gift] || 0) + 1;
+                });
+            } catch (e) {
+                giftCounts = {};
             }
 
             const all = await sb.from('users')
@@ -446,9 +617,10 @@
                 return true;
             });
 
-            // Ті, хто отримав твій лайк — на початок колоди
+            // Спочатку забустовані 🚀, потім ті, хто отримав твій лайк
             deck.sort(function (a, b) {
-                return (myLikes.has(b.user_id) ? 1 : 0) - (myLikes.has(a.user_id) ? 1 : 0);
+                return (isBoosted(b) ? 1 : 0) - (isBoosted(a) ? 1 : 0)
+                    || (myLikes.has(b.user_id) ? 1 : 0) - (myLikes.has(a.user_id) ? 1 : 0);
             });
             pos = 0;
 
@@ -495,7 +667,7 @@
 
         document.getElementById('applyFilter').addEventListener('click', async function () {
             const patch = {
-                user_id: tgUser.id, 
+                user_id: tgUser.id,
                 filter_age_min: parseInt(document.getElementById('flMin').value, 10) || 16,
                 filter_age_max: parseInt(document.getElementById('flMax').value, 10) || 99,
                 filter_gender: document.getElementById('flGender').value,
@@ -514,6 +686,109 @@
                 console.error(err);
                 show(els.loadError);
             }
+        });
+
+        // === Скарга на анкету ===
+        const reportModal = document.getElementById('reportModal');
+
+        function showToast(text) {
+            const t = document.getElementById('toast');
+            t.textContent = text;
+            t.style.display = 'block';
+            setTimeout(function () { t.style.display = 'none'; }, 2200);
+        }
+
+        document.getElementById('btnReport').addEventListener('click', function () {
+            reportModal.style.display = 'flex';
+        });
+        document.getElementById('reportCancel').addEventListener('click', function () {
+            reportModal.style.display = 'none';
+        });
+        reportModal.addEventListener('click', function (e) {
+            if (e.target === reportModal) reportModal.style.display = 'none';
+        });
+
+        reportModal.querySelectorAll('button[data-reason]').forEach(function (b) {
+            b.addEventListener('click', function () {
+                const target = deck[pos];
+                if (!target) return;
+                const key = 'reported_' + target.user_id;
+                if (localStorage.getItem(key)) {
+                    reportModal.style.display = 'none';
+                    showToast('Ти вже поскаржився на цю анкету');
+                    return;
+                }
+                sb.from('reports').insert({
+                    reporter_id: tgUser.id,
+                    reported_id: target.user_id,
+                    reason: b.dataset.reason
+                }).then(function () {
+                    localStorage.setItem(key, '1');
+                    reportModal.style.display = 'none';
+                    showToast('Скаргу надіслано ✅');
+                }, function () {
+                    reportModal.style.display = 'none';
+                    showToast('Не вдалося надіслати 😕');
+                });
+            });
+        });
+
+        // === 🎁 Подарунки ===
+        const giftModal = document.getElementById('giftModal');
+
+        document.getElementById('btnGift').addEventListener('click', function () {
+            document.getElementById('giftBalance').textContent = '⭐ Твій рейтинг: ' + myRating;
+            giftModal.style.display = 'flex';
+        });
+        document.getElementById('giftCancel').addEventListener('click', function () {
+            giftModal.style.display = 'none';
+        });
+        giftModal.addEventListener('click', function (e) {
+            if (e.target === giftModal) giftModal.style.display = 'none';
+        });
+
+        giftModal.querySelectorAll('button[data-gift]').forEach(function (b) {
+            b.addEventListener('click', async function () {
+                const target = deck[pos];
+                if (!target) return;
+                const g = b.dataset.gift;
+                const price = GIFT_PRICES[g];
+                if (myRating < price) {
+                    showToast('Не вистачає рейтингу (треба ⭐' + price + ')');
+                    return;
+                }
+                giftModal.style.display = 'none';
+                try {
+                    // Списуємо рейтинг у дарувальника
+                    await sb.from('users')
+                        .update({ rating: Math.max(0, myRating - price) })
+                        .eq('user_id', tgUser.id);
+                    myRating -= price;
+
+                    // Записуємо подарунок
+                    await sb.from('gifts').insert({
+                        from_user: tgUser.id,
+                        to_user: target.user_id,
+                        gift: g
+                    });
+
+                    // Бонус рейтингу отримувачу
+                    sb.from('users').select('rating').eq('user_id', target.user_id).maybeSingle()
+                        .then(function (r) {
+                            const nv = Math.max(0, ((r.data && r.data.rating) || 0) + GIFT_BONUS[g]);
+                            sb.from('users').update({ rating: nv })
+                                .eq('user_id', target.user_id).then(function () {}, console.error);
+                        });
+
+                    giftCounts[target.user_id] = giftCounts[target.user_id] || {};
+                    giftCounts[target.user_id][g] = (giftCounts[target.user_id][g] || 0) + 1;
+                    renderCard();
+                    showToast('Подарунок надіслано ' + GIFT_EMOJI[g]);
+                } catch (err) {
+                    console.error(err);
+                    showToast('Не вдалося надіслати 😕');
+                }
+            });
         });
 
         show(els.loading);
