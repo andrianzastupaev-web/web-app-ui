@@ -348,14 +348,14 @@
         <div class="emoji">📝</div>
         <h2>Спочатку — анкета</h2>
         <p>Грають лише зареєстровані учасники</p>
-        <a class="cta" href="edit.html?v=10">Заповнити анкету</a>
+        <a class="cta" href="edit.html?v=11">Заповнити анкету</a>
     </div>
 
     <div class="placeholder" id="gameFull">
         <div class="emoji">🚪</div>
         <h2>Гра повна</h2>
         <p>За столом уже 4 гравці. Спробуй пізніше!</p>
-        <a class="cta" href="search.html?v=19">🔍 Пошук анкет</a>
+        <a class="cta" href="search.html?v=20">🔍 Пошук анкет</a>
     </div>
 
     <div class="placeholder" id="loading">
@@ -402,9 +402,9 @@
     </div>
 
     <nav class="bottom-nav">
-        <a href="search.html?v=19" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=20" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
-        <a href="bottle.html?v=30" class="current" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=31" class="current" title="Пляшечка">🍾</a>
     </nav>
 
     <!-- Інфо-панель гри -->
@@ -907,8 +907,8 @@
                 return;
             }
             const { data: my } = await sb.from('users')
-                .select('user_id, is_approved').eq('user_id', tgUser.id).maybeSingle();
-            if (!my) {
+                .select('user_id, first_name, is_approved').eq('user_id', tgUser.id).maybeSingle();
+            if (!my || !my.first_name) {
                 show(els.needRegister);
                 return;
             }
