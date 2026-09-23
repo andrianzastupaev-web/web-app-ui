@@ -167,6 +167,54 @@
             text-align: center;
             cursor: pointer;
         }
+        /* Профіль дарувальника */
+        .gift-row { cursor: pointer; }
+        .pf-modal {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 50;
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .pf-card {
+            width: 100%; max-width: 340px;
+            max-height: 80vh;
+            overflow-y: auto;
+            background: #1d1d2e;
+            border-radius: 16px;
+            padding: 16px;
+        }
+        .pf-photo {
+            width: 100%; aspect-ratio: 1/1;
+            object-fit: cover;
+            border-radius: 12px;
+            display: block;
+            background: #2a2a40;
+        }
+        .pf-fallback {
+            width: 100%; aspect-ratio: 1/1;
+            display: none;
+            align-items: center; justify-content: center;
+            font-size: 64px;
+            background: #2a2a40;
+            border-radius: 12px;
+        }
+        .pf-name { font-size: 18px; font-weight: 700; margin-top: 12px; }
+        .pf-meta { font-size: 13px; color: #8a8aa0; margin-top: 2px; }
+        .pf-bio { font-size: 13px; color: #d8d8e4; line-height: 1.45; margin-top: 7px; }
+        .pf-close {
+            display: block; width: 100%;
+            margin-top: 14px;
+            padding: 11px;
+            border: none;
+            border-radius: 12px;
+            background: #2a2a40;
+            color: #fff;
+            font-size: 14px; font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+        }
 
         .support-btn {
             display: block;
@@ -206,7 +254,7 @@
 </head>
 <body>
     <div class="topbar">
-        <h1>💫 Circles <span></span></h1>
+        <h1>💫 Circles <span>— мій профіль</span></h1>
     </div>
 
     <div class="placeholder" id="needRegister">
@@ -248,14 +296,29 @@
                 </div>
             </div>
         </div>
-        <a class="edit-btn" href="edit.html?v=10">Редагувати анкету</a>
+        <a class="edit-btn" href="edit.html?v=10">✏️ Редагувати анкету</a>
         <a class="support-btn" href="top.html">🏆 ТОП учасників</a>
+        <div class="view-hint">Так тебе бачать інші учасники</div>
+    </div>
+
     <!-- Подарунки: хто і коли -->
     <div class="gift-modal" id="giftModal">
         <div class="gift-modal-card">
             <h3 id="gmTitle">🎁 Подарунки</h3>
             <div id="gmList"></div>
             <button class="gm-close" id="gmClose">Закрити</button>
+        </div>
+    </div>
+
+    <!-- Профіль дарувальника -->
+    <div class="pf-modal" id="pfModal">
+        <div class="pf-card">
+            <img class="pf-photo" id="pfPhoto" alt="">
+            <div class="pf-fallback" id="pfFallback">🙂</div>
+            <div class="pf-name" id="pfName"></div>
+            <div class="pf-meta" id="pfMeta"></div>
+            <div class="pf-bio" id="pfBio"></div>
+            <button class="pf-close" id="pfClose">Закрити</button>
         </div>
     </div>
 
@@ -330,14 +393,15 @@
                     cnt.style.display = 'none';
                 }
 
-                // Імена тих, хто дарував
+                // Імена та анкети тих, хто дарував
                 if (myGifts.length) {
                     const ids = [];
                     myGifts.forEach(function (g) {
                         if (ids.indexOf(g.from_user) === -1) ids.push(g.from_user);
                     });
                     const { data: us } = await sb.from('users')
-                        .select('user_id, first_name').in('user_id', ids);
+                        .select('user_id, first_name, age, city, bio, photo_url, photo_url2')
+                        .in('user_id', ids);
                     gifters = {};
                     (us || []).forEach(function (u) { gifters[u.user_id] = u; });
                 }
@@ -369,12 +433,50 @@
                         + '<div class="gr-name">' + escapeHtml(u.first_name || 'Учасник') + '</div>'
                         + '<div class="gr-date">' + fmtGiftDate(g.created_at) + '</div>'
                         + '</div>';
+                    div.addEventListener('click', function () {
+                        openGifterProfile(g.from_user);
+                    });
                     list.appendChild(div);
                 });
             }
 
             document.getElementById('giftModal').style.display = 'flex';
         }
+
+        // Профіль того, хто подарував
+        function openGifterProfile(uid) {
+            const u = gifters[uid];
+            if (!u) return;
+            document.getElementById('giftModal').style.display = 'none';
+
+            const photo = u.photo_url || u.photo_url2;
+            const pfPhoto = document.getElementById('pfPhoto');
+            const pfFallback = document.getElementById('pfFallback');
+            if (photo) {
+                pfPhoto.src = photo;
+                pfPhoto.style.display = 'block';
+                pfFallback.style.display = 'none';
+            } else {
+                pfPhoto.style.display = 'none';
+                pfFallback.style.display = 'flex';
+            }
+
+            document.getElementById('pfName').textContent =
+                (u.first_name || 'Учасник') + (u.age ? ', ' + u.age : '');
+            document.getElementById('pfMeta').textContent = u.city ? '📍 ' + u.city : '';
+            const bio = document.getElementById('pfBio');
+            bio.textContent = u.bio ? '❝ ' + u.bio + ' ❞' : '';
+            bio.style.display = u.bio ? 'block' : 'none';
+
+            document.getElementById('pfModal').style.display = 'flex';
+        }
+
+        document.getElementById('pfClose').addEventListener('click', function () {
+            document.getElementById('pfModal').style.display = 'none';
+        });
+        document.getElementById('pfModal').addEventListener('click', function (e) {
+            if (e.target === this) this.style.display = 'none';
+        });
 
         document.getElementById('giftBtn').addEventListener('click', function (e) {
             e.stopPropagation();
