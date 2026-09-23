@@ -332,7 +332,7 @@
 <body>
     <div class="topbar">
         <h1>🍾 Пляшечка</h1>
-        <button class="info-btn" id="infoBtn">ℹ️ Правила </button>
+        <button class="info-btn" id="infoBtn">ℹ️ Гра</button>
         <a class="back" href="index.html">← Профіль</a>
     </div>
 
@@ -355,7 +355,7 @@
         <div class="emoji">🚪</div>
         <h2>Гра повна</h2>
         <p>За столом уже 4 гравці. Спробуй пізніше!</p>
-        <a class="cta" href="search.html?v=16">🔍 Пошук анкет</a>
+        <a class="cta" href="search.html?v=19">🔍 Пошук анкет</a>
     </div>
 
     <div class="placeholder" id="loading">
@@ -402,9 +402,9 @@
     </div>
 
     <nav class="bottom-nav">
-        <a href="search.html?v=16" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=19" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
-        <a href="bottle.html?v=28" class="current" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=30" class="current" title="Пляшечка">🍾</a>
     </nav>
 
     <!-- Інфо-панель гри -->
@@ -412,9 +412,9 @@
         <div class="info-panel-card">
             <h3>🍾 Як грати</h3>
             <table class="info-table">
-                <tr><td class="step">1</td><td>Крути пляшечку 🍾</td></tr>
-                <tr><td class="step">2</td><td>Вона вкаже на гравця 👤</td></tr>
-                <tr><td class="step">3</td><td>Обери дію 😘 ❤️ 👎 🍅</td></tr>
+                <tr><td class="step">1</td><td>Крути пляшечку</td></tr>
+                <tr><td class="step">2</td><td>Вона вкаже на гравця</td></tr>
+                <tr><td class="step">3</td><td>Обери дію</td></tr>
                 <tr><td class="step">4</td><td>Тапни аватар → профіль</td></tr>
             </table>
 
@@ -752,12 +752,12 @@
 
             if (game.status === 'waiting') {
                 if (count < 2) {
-                    els.statusLine.textContent = 'Чекаємо ще гравців... (' + count + '/' + MAX_PLAYERS + ')';
+                    els.statusLine.textContent = 'Стіл ' + game.id + ' • Чекаємо ще гравців (' + count + '/' + MAX_PLAYERS + ')';
                     els.spinBtn.style.display = 'block';
                     els.spinBtn.disabled = true;
                     els.spinBtn.textContent = '⏳ Чекаємо гравців (потрібно 2+)';
                 } else {
-                    els.statusLine.textContent = 'Гравців: ' + count + '/' + MAX_PLAYERS + '. Крутить: ' + nameOf(game.spinner || game.players[0]);
+                    els.statusLine.textContent = 'Стіл ' + game.id + ' • Гравців ' + count + '/' + MAX_PLAYERS + ' • Крутить: ' + nameOf(game.spinner || game.players[0]);
                     els.spinBtn.style.display = 'block';
                     const myTurn = !(game.spinner && game.spinner !== tgUser.id);
                     els.spinBtn.disabled = !myTurn;
@@ -800,30 +800,56 @@
             }
         }
 
-        // === Опитування стану гри ===
+        // === Опитування стану гри (кілька столів) ===
         async function fetchGame() {
             const res = await sb.from('bottle_games')
                 .select('*').neq('status', 'finished')
-                .order('id', { ascending: false }).limit(1).maybeSingle();
+                .order('id', { ascending: true });
 
             if (res.error) throw res.error;
-            game = res.data;
+            const tables = res.data || [];
+
+            // 1. Стіл, де я вже граю
+            game = tables.find(function (g) {
+                return g.players.indexOf(tgUser.id) !== -1;
+            }) || null;
+
+            // 2. Ще не граю — підсідаю до найповнішого столу з вільним місцем
             if (!game) {
-                const created = await sb.from('bottle_games').insert({
-                    host_id: tgUser.id,
-                    players: [tgUser.id],
-                    status: 'waiting'
-                }).select().maybeSingle();
-                if (created.error) throw created.error;
-                game = created.data;
-            } else if (game.players.indexOf(tgUser.id) === -1) {
-                if (game.players.length >= MAX_PLAYERS) {
-                    show(els.gameFull);
-                    return;
+                const withSpace = tables.filter(function (g) {
+                    return g.players.length < MAX_PLAYERS;
+                }).sort(function (a, b) {
+                    return b.players.length - a.players.length || a.id - b.id;
+                });
+
+                if (withSpace.length) {
+                    const t = withSpace[0];
+                    const players = t.players.concat([tgUser.id]);
+                    await sb.from('bottle_games').update({ players: players }).eq('id', t.id);
+                    t.players = players;
+                    game = t;
+                } else {
+                    // 3. Всі столи повні — створюю новий стіл
+                    const created = await sb.from('bottle_games').insert({
+                        host_id: tgUser.id,
+                        players: [tgUser.id],
+                        status: 'waiting'
+                    }).select().maybeSingle();
+                    if (created.error) throw created.error;
+                    game = created.data;
                 }
-                const players = game.players.concat([tgUser.id]);
+            }
+
+            // 4. Захист від одночасного входу: якщо за столом опинилось > 4 —
+            //    зайві самі виходять, і наступне опитування саджає їх за інший стіл
+            if (game.players.length > MAX_PLAYERS
+                && game.players.indexOf(tgUser.id) >= MAX_PLAYERS) {
+                const players = game.players.filter(function (u) {
+                    return u !== tgUser.id;
+                });
                 await sb.from('bottle_games').update({ players: players }).eq('id', game.id);
-                game.players = players;
+                game = null;
+                return;
             }
 
             if (game.players.length) {
