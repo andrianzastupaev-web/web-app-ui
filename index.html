@@ -98,21 +98,6 @@
         }
         .view-hint { text-align: center; margin-top: 8px; font-size: 11px; color: #6d6d84; }
 
-        .boost-btn {
-            display: block;
-            width: 100%;
-            margin-top: 6px;
-            padding: 12px;
-            border: none;
-            border-radius: 12px;
-            background: #7c3aed;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 700;
-            text-align: center;
-            cursor: pointer;
-        }
-        .boost-btn:disabled { opacity: 0.55; cursor: default; }
         .gifts-box {
             display: none;
             margin-top: 6px;
@@ -206,7 +191,6 @@
             </div>
         </div>
         <a class="edit-btn" href="edit.html?v=10"> Редагувати анкету</a>
-        <button class="boost-btn" id="boostBtn"> Забустити анкету</button>
         <div class="gifts-box" id="giftsBox"></div>
         <a class="support-btn" href="top.html">🏆 ТОП учасників</a>
     <nav class="bottom-nav">
@@ -242,53 +226,10 @@
             meta: document.getElementById('cMeta'),
             bio: document.getElementById('cBio'),
             badge: document.getElementById('cBadge'),
-            boostBtn: document.getElementById('boostBtn'),
             giftsBox: document.getElementById('giftsBox'),
         };
 
-        // === 🚀 Буст анкети ===
-        const BOOST_ACTIVE_MS = 30 * 60 * 1000;      // діє 30 хвилин
-        const BOOST_COOLDOWN_MS = 24 * 60 * 60 * 1000; // раз на добу
         const GIFT_EMOJI = { rose: '🌹', choco: '🍫', teddy: '🧸', ring: '💍' };
-        let me = null;
-
-        function fmtLeft(ms) {
-            const min = Math.ceil(ms / 60000);
-            if (min < 60) return min + ' хв';
-            return Math.floor(min / 60) + ' год ' + (min % 60) + ' хв';
-        }
-
-        function renderBoost() {
-            if (!me || !me.boosted_at) return;
-            const passed = Date.now() - new Date(me.boosted_at).getTime();
-            if (passed < BOOST_ACTIVE_MS) {
-                els.boostBtn.disabled = true;
-                els.boostBtn.textContent = '🚀 Буст активний — ще ' + fmtLeft(BOOST_ACTIVE_MS - passed);
-            } else if (passed < BOOST_COOLDOWN_MS) {
-                els.boostBtn.disabled = true;
-                els.boostBtn.textContent = '🚀 Наступний буст через ' + fmtLeft(BOOST_COOLDOWN_MS - passed);
-            }
-        }
-
-        els.boostBtn.addEventListener('click', async function () {
-            els.boostBtn.disabled = true;
-            els.boostBtn.textContent = '⏳ Бустую...';
-            try {
-                await sb.from('users')
-                    .update({ boosted_at: new Date().toISOString() })
-                    .eq('user_id', tgUser.id);
-                const { data: fresh } = await sb.from('users')
-                    .select('*').eq('user_id', tgUser.id).maybeSingle();
-                if (fresh) { me = fresh; renderProfile(fresh); }
-            } catch (err) {
-                console.error(err);
-                els.boostBtn.textContent = '🚀 Спробуй ще раз';
-                els.boostBtn.disabled = false;
-            }
-        });
-
-        // Оновлюємо відлік часу бусту без перезавантаження
-        setInterval(renderBoost, 30000);
 
         // === 🎁 Подарунки, які отримав ===
         async function loadGifts() {
@@ -363,7 +304,6 @@
 
 
         function renderProfile(p) {
-            me = p;
             myPhotos = [p.photo_url, p.photo_url2].filter(Boolean);
             photoIdx = 0;
 
@@ -395,10 +335,6 @@
             const showName = p.username && p.show_username !== false;
             els.badge.textContent = showName ? '@' + p.username : '';
             els.badge.style.display = showName ? 'block' : 'none';
-
-            els.boostBtn.disabled = false;
-            els.boostBtn.textContent = '🚀 Забустити анкету';
-            renderBoost();
 
             show(els.profileWrap);
             loadGifts();
@@ -432,4 +368,4 @@
         });
     </script>
 </body>
-</html>
+</html>html>
