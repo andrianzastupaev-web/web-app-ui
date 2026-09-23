@@ -98,6 +98,34 @@
         }
         .view-hint { text-align: center; margin-top: 8px; font-size: 11px; color: #6d6d84; }
 
+        .boost-btn {
+            display: block;
+            width: 100%;
+            margin-top: 6px;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: #7c3aed;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+        }
+        .boost-btn:disabled { opacity: 0.55; cursor: default; }
+        .gifts-box {
+            display: none;
+            margin-top: 6px;
+            padding: 11px;
+            border: 1px solid #33334a;
+            border-radius: 10px;
+            background: #1d1d2e;
+            color: #d8d8e4;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+        }
+
         .support-btn {
             display: block;
             width: 100%;
@@ -178,11 +206,13 @@
             </div>
         </div>
         <a class="edit-btn" href="edit.html?v=10"> Редагувати анкету</a>
+        <button class="boost-btn" id="boostBtn"> Забустити анкету</button>
+        <div class="gifts-box" id="giftsBox"></div>
         <a class="support-btn" href="top.html">🏆 ТОП учасників</a>
     <nav class="bottom-nav">
-        <a href="search.html?v=16" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=19" title="Пошук анкет">🔍</a>
         <a href="index.html" class="current" title="Мій профіль">👤</a>
-        <a href="bottle.html?v=28" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=30" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -212,7 +242,70 @@
             meta: document.getElementById('cMeta'),
             bio: document.getElementById('cBio'),
             badge: document.getElementById('cBadge'),
+            boostBtn: document.getElementById('boostBtn'),
+            giftsBox: document.getElementById('giftsBox'),
         };
+
+        // === 🚀 Буст анкети ===
+        const BOOST_ACTIVE_MS = 30 * 60 * 1000;      // діє 30 хвилин
+        const BOOST_COOLDOWN_MS = 24 * 60 * 60 * 1000; // раз на добу
+        const GIFT_EMOJI = { rose: '🌹', choco: '🍫', teddy: '🧸', ring: '💍' };
+        let me = null;
+
+        function fmtLeft(ms) {
+            const min = Math.ceil(ms / 60000);
+            if (min < 60) return min + ' хв';
+            return Math.floor(min / 60) + ' год ' + (min % 60) + ' хв';
+        }
+
+        function renderBoost() {
+            if (!me || !me.boosted_at) return;
+            const passed = Date.now() - new Date(me.boosted_at).getTime();
+            if (passed < BOOST_ACTIVE_MS) {
+                els.boostBtn.disabled = true;
+                els.boostBtn.textContent = '🚀 Буст активний — ще ' + fmtLeft(BOOST_ACTIVE_MS - passed);
+            } else if (passed < BOOST_COOLDOWN_MS) {
+                els.boostBtn.disabled = true;
+                els.boostBtn.textContent = '🚀 Наступний буст через ' + fmtLeft(BOOST_COOLDOWN_MS - passed);
+            }
+        }
+
+        els.boostBtn.addEventListener('click', async function () {
+            els.boostBtn.disabled = true;
+            els.boostBtn.textContent = '⏳ Бустую...';
+            try {
+                await sb.from('users')
+                    .update({ boosted_at: new Date().toISOString() })
+                    .eq('user_id', tgUser.id);
+                const { data: fresh } = await sb.from('users')
+                    .select('*').eq('user_id', tgUser.id).maybeSingle();
+                if (fresh) { me = fresh; renderProfile(fresh); }
+            } catch (err) {
+                console.error(err);
+                els.boostBtn.textContent = '🚀 Спробуй ще раз';
+                els.boostBtn.disabled = false;
+            }
+        });
+
+        // Оновлюємо відлік часу бусту без перезавантаження
+        setInterval(renderBoost, 30000);
+
+        // === 🎁 Подарунки, які отримав ===
+        async function loadGifts() {
+            try {
+                const { data } = await sb.from('gifts')
+                    .select('gift').eq('to_user', tgUser.id);
+                if (!data || !data.length) return;
+                const cnt = {};
+                data.forEach(function (g) {
+                    cnt[g.gift] = (cnt[g.gift] || 0) + 1;
+                });
+                els.giftsBox.innerHTML = '🎁 Подарунки: ' + Object.keys(cnt)
+                    .map(function (k) { return (GIFT_EMOJI[k] || '🎁') + '×' + cnt[k]; })
+                    .join(' ');
+                els.giftsBox.style.display = 'block';
+            } catch (e) { /* таблиці ще нема — тихо */ }
+        }
 
         // Кружечки-індикатори фото (клікабельні)
         function renderDots(photos, idx) {
@@ -269,8 +362,9 @@
         });
 
 
-        function renderProfile(me) {
-            myPhotos = [me.photo_url, me.photo_url2].filter(Boolean);
+        function renderProfile(p) {
+            me = p;
+            myPhotos = [p.photo_url, p.photo_url2].filter(Boolean);
             photoIdx = 0;
 
             if (myPhotos.length) {
@@ -294,15 +388,20 @@
                 return '💖';
             }
 
-            els.name.textContent = ratingBadge(me.rating) + ' ' + (me.first_name || 'Учасник') + (me.age ? ', ' + me.age : '');
-            els.meta.textContent = me.city ? '📍 ' + me.city : '';
-            els.bio.textContent = me.bio ? '“' + me.bio + '”' : '';
-            els.bio.style.display = me.bio ? 'block' : 'none';
-            const showName = me.username && me.show_username !== false;
-            els.badge.textContent = showName ? '@' + me.username : '';
+            els.name.textContent = ratingBadge(p.rating) + ' ' + (p.first_name || 'Учасник') + (p.age ? ', ' + p.age : '');
+            els.meta.textContent = p.city ? '📍 ' + p.city : '';
+            els.bio.textContent = p.bio ? '“' + p.bio + '”' : '';
+            els.bio.style.display = p.bio ? 'block' : 'none';
+            const showName = p.username && p.show_username !== false;
+            els.badge.textContent = showName ? '@' + p.username : '';
             els.badge.style.display = showName ? 'block' : 'none';
 
+            els.boostBtn.disabled = false;
+            els.boostBtn.textContent = '🚀 Забустити анкету';
+            renderBoost();
+
             show(els.profileWrap);
+            loadGifts();
         }
 
         async function init() {
@@ -311,18 +410,18 @@
                 return;
             }
 
-            const { data: me, error } = await sb.from('users')
+            const { data: my, error } = await sb.from('users')
                 .select('*').eq('user_id', tgUser.id).maybeSingle();
 
             if (error) throw error;
 
-            if (!me) {
+            if (!my) {
                 show(els.needRegister);
-            } else if (!me.is_approved) {
+            } else if (!my.is_approved) {
                 // На модерації — показуємо ТОЛЬКИ цей екран
                 show(els.moderation);
             } else {
-                renderProfile(me);
+                renderProfile(my);
             }
         }
 
