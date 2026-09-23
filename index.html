@@ -98,27 +98,30 @@
         }
         .view-hint { text-align: center; margin-top: 8px; font-size: 11px; color: #6d6d84; }
 
-        /* 🎁 Подарунки у профілі */
-        .gifts-section { display: none; margin-top: 10px; }
-        .gifts-title {
-            font-size: 12px; font-weight: 700;
-            color: #a8a8bd; margin-bottom: 8px;
-        }
-        .gifts-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-        .gift-tile {
-            min-width: 66px;
-            padding: 10px 12px 8px;
-            border-radius: 14px;
-            background: #1d1d2e;
-            border: 1px solid #2e2e45;
-            text-align: center;
+        /* 🎁 Кнопка подарунків на фото */
+        .gift-btn {
+            position: absolute; top: 10px; right: 10px;
+            width: 38px; height: 38px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px;
             cursor: pointer;
+            z-index: 2;
         }
-        .gift-tile .g-emoji { display: block; font-size: 24px; }
-        .gift-tile .g-count {
-            display: block; font-size: 11px;
-            font-weight: 700; color: #ffd166; margin-top: 3px;
+        .gift-count {
+            position: absolute; top: -6px; right: -6px;
+            min-width: 18px; height: 18px;
+            border-radius: 9px;
+            background: #c0265c;
+            color: #fff;
+            font-size: 11px; font-weight: 700;
+            display: none;
+            align-items: center; justify-content: center;
+            padding: 0 4px;
         }
+        /* Випадаючий список подарунків */
         .gift-modal {
             display: none;
             position: fixed; inset: 0;
@@ -129,6 +132,8 @@
         }
         .gift-modal-card {
             width: 100%; max-width: 340px;
+            max-height: 70vh;
+            overflow-y: auto;
             background: #1d1d2e;
             border-radius: 16px;
             padding: 16px;
@@ -145,6 +150,12 @@
         .gift-row .gr-info { flex: 1; }
         .gift-row .gr-name { font-size: 14px; font-weight: 700; }
         .gift-row .gr-date { font-size: 11px; color: #8a8aa0; margin-top: 1px; }
+        .gm-empty {
+            text-align: center;
+            color: #8a8aa0;
+            font-size: 13px;
+            padding: 18px 0;
+        }
         .gm-close {
             display: block; width: 100%;
             padding: 11px;
@@ -229,6 +240,7 @@
                 <div class="photo-fallback" id="cFallback">🙂</div>
                 <div class="photo-dots" id="cDots"></div>
                 <span class="badge" id="cBadge"></span>
+                <button class="gift-btn" id="giftBtn" title="Подарунки">🎁<span class="gift-count" id="giftCount"></span></button>
                 <div class="overlay">
                     <div class="name" id="cName"></div>
                     <div class="meta" id="cMeta"></div>
@@ -236,16 +248,12 @@
                 </div>
             </div>
         </div>
-        <a class="edit-btn" href="edit.html?v=10"> Редагувати анкету</a>
-        <div class="gifts-section" id="giftsSection">
-            <div class="gifts-title">🎁 Мої подарунки</div>
-            <div class="gifts-grid" id="giftsGrid"></div>
-        </div>
+        <a class="edit-btn" href="edit.html?v=10">Редагувати анкету</a>
         <a class="support-btn" href="top.html">🏆 ТОП учасників</a>
-    <!-- Хто подарував -->
+    <!-- Подарунки: хто і коли -->
     <div class="gift-modal" id="giftModal">
         <div class="gift-modal-card">
-            <h3 id="gmTitle">🎁 Подарунок</h3>
+            <h3 id="gmTitle">🎁 Подарунки</h3>
             <div id="gmList"></div>
             <button class="gm-close" id="gmClose">Закрити</button>
         </div>
@@ -287,7 +295,6 @@
         };
 
         const GIFT_EMOJI = { rose: '🌹', choco: '🍫', teddy: '🧸', ring: '💍' };
-        const GIFT_NAMES = { rose: 'Троянда', choco: 'Шоколадка', teddy: 'Ведмедик', ring: 'Кільце' };
 
         function escapeHtml(s) {
             return String(s).replace(/[&<>"']/g, function (c) {
@@ -311,64 +318,68 @@
                     .select('gift, from_user, created_at')
                     .eq('to_user', tgUser.id)
                     .order('created_at', { ascending: false });
-                if (!data || !data.length) return;
-                myGifts = data;
+
+                myGifts = data || [];
+
+                // Лічильник на кнопці біля фото
+                const cnt = document.getElementById('giftCount');
+                if (myGifts.length) {
+                    cnt.textContent = myGifts.length;
+                    cnt.style.display = 'flex';
+                } else {
+                    cnt.style.display = 'none';
+                }
 
                 // Імена тих, хто дарував
-                const ids = [];
-                data.forEach(function (g) {
-                    if (ids.indexOf(g.from_user) === -1) ids.push(g.from_user);
-                });
-                const { data: us } = await sb.from('users')
-                    .select('user_id, first_name').in('user_id', ids);
-                gifters = {};
-                (us || []).forEach(function (u) { gifters[u.user_id] = u; });
-
-                // Плитки за типом подарунка
-                const cnt = {};
-                data.forEach(function (g) {
-                    cnt[g.gift] = (cnt[g.gift] || 0) + 1;
-                });
-                const grid = document.getElementById('giftsGrid');
-                grid.innerHTML = '';
-                Object.keys(cnt).forEach(function (k) {
-                    const t = document.createElement('div');
-                    t.className = 'gift-tile';
-                    t.innerHTML = '<span class="g-emoji">' + (GIFT_EMOJI[k] || '🎁') + '</span>'
-                        + '<span class="g-count">×' + cnt[k] + '</span>';
-                    t.addEventListener('click', function () { openGiftModal(k); });
-                    grid.appendChild(t);
-                });
-                document.getElementById('giftsSection').style.display = 'block';
+                if (myGifts.length) {
+                    const ids = [];
+                    myGifts.forEach(function (g) {
+                        if (ids.indexOf(g.from_user) === -1) ids.push(g.from_user);
+                    });
+                    const { data: us } = await sb.from('users')
+                        .select('user_id, first_name').in('user_id', ids);
+                    gifters = {};
+                    (us || []).forEach(function (u) { gifters[u.user_id] = u; });
+                }
             } catch (e) {
                 console.error(e);
             }
         }
 
-        // Хто подарував конкретний подарунок
-        function openGiftModal(kind) {
-            const rows = myGifts.filter(function (g) { return g.gift === kind; });
-            const emoji = GIFT_EMOJI[kind] || '🎁';
-            document.getElementById('gmTitle').textContent =
-                emoji + ' ' + (GIFT_NAMES[kind] || 'Подарунок') + ' — ' + rows.length;
-
+        // Випадаючий список: усі подарунки — від кого і коли
+        function openGiftsModal() {
             const list = document.getElementById('gmList');
+            const title = document.getElementById('gmTitle');
             list.innerHTML = '';
-            rows.forEach(function (g) {
-                const u = gifters[g.from_user] || {};
-                const div = document.createElement('div');
-                div.className = 'gift-row';
-                div.innerHTML = '<div class="gr-emoji">' + emoji + '</div>'
-                    + '<div class="gr-info">'
-                    + '<div class="gr-name">' + escapeHtml(u.first_name || 'Учасник') + '</div>'
-                    + '<div class="gr-date">' + fmtGiftDate(g.created_at) + '</div>'
-                    + '</div>';
-                list.appendChild(div);
-            });
+
+            if (!myGifts.length) {
+                title.textContent = '🎁 Подарунки';
+                const d = document.createElement('div');
+                d.className = 'gm-empty';
+                d.textContent = 'Ще ніхто не подарував 🙈';
+                list.appendChild(d);
+            } else {
+                title.textContent = '🎁 Подарунки — ' + myGifts.length;
+                myGifts.forEach(function (g) {
+                    const u = gifters[g.from_user] || {};
+                    const div = document.createElement('div');
+                    div.className = 'gift-row';
+                    div.innerHTML = '<div class="gr-emoji">' + (GIFT_EMOJI[g.gift] || '🎁') + '</div>'
+                        + '<div class="gr-info">'
+                        + '<div class="gr-name">' + escapeHtml(u.first_name || 'Учасник') + '</div>'
+                        + '<div class="gr-date">' + fmtGiftDate(g.created_at) + '</div>'
+                        + '</div>';
+                    list.appendChild(div);
+                });
+            }
 
             document.getElementById('giftModal').style.display = 'flex';
         }
 
+        document.getElementById('giftBtn').addEventListener('click', function (e) {
+            e.stopPropagation();
+            openGiftsModal();
+        });
         document.getElementById('gmClose').addEventListener('click', function () {
             document.getElementById('giftModal').style.display = 'none';
         });
