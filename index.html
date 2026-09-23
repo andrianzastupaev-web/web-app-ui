@@ -167,6 +167,21 @@
             text-align: center;
             cursor: pointer;
         }
+        /* Сторінка не рухається, поки відкритий профіль */
+        body.no-scroll { overflow: hidden; }
+        .gift-modal-card, .pf-card { overscroll-behavior: contain; }
+        .toast {
+            position: fixed; left: 50%; bottom: 90px;
+            transform: translateX(-50%);
+            background: #2a2a40;
+            padding: 11px 18px;
+            border-radius: 12px;
+            font-size: 13px; font-weight: 600;
+            z-index: 60;
+            display: none;
+            white-space: nowrap;
+        }
+
         /* Профіль дарувальника */
         .gift-row { cursor: pointer; }
         .pf-modal {
@@ -213,6 +228,27 @@
             color: #fff;
             font-size: 14px; font-weight: 700;
             text-align: center;
+            cursor: pointer;
+        }
+        .pf-actions { display: flex; gap: 8px; margin-top: 14px; }
+        .pf-like {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: #c0265c;
+            color: #fff;
+            font-size: 14px; font-weight: 700;
+            cursor: pointer;
+        }
+        .pf-back {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: #2a2a40;
+            color: #fff;
+            font-size: 14px; font-weight: 700;
             cursor: pointer;
         }
 
@@ -296,11 +332,8 @@
                 </div>
             </div>
         </div>
-        <a class="edit-btn" href="edit.html?v=10">✏️ Редагувати анкету</a>
+        <a class="edit-btn" href="edit.html?v=10"> Редагувати анкету</a>
         <a class="support-btn" href="top.html">🏆 ТОП учасників</a>
-        <div class="view-hint">Так тебе бачать інші учасники</div>
-    </div>
-
     <!-- Подарунки: хто і коли -->
     <div class="gift-modal" id="giftModal">
         <div class="gift-modal-card">
@@ -318,9 +351,14 @@
             <div class="pf-name" id="pfName"></div>
             <div class="pf-meta" id="pfMeta"></div>
             <div class="pf-bio" id="pfBio"></div>
-            <button class="pf-close" id="pfClose">Закрити</button>
+            <div class="pf-actions">
+                <button class="pf-like" id="pfLike">❤️ Лайкнути</button>
+                <button class="pf-back" id="pfBack">← Назад</button>
+            </div>
         </div>
     </div>
+
+    <div class="toast" id="toast"></div>
 
     <nav class="bottom-nav">
         <a href="search.html?v=19" title="Пошук анкет">🔍</a>
@@ -441,13 +479,34 @@
             }
 
             document.getElementById('giftModal').style.display = 'flex';
+            lockScroll();
+        }
+
+        // === Керування модалками + блокування скролу сторінки ===
+        function showToast(text) {
+            const t = document.getElementById('toast');
+            t.textContent = text;
+            t.style.display = 'block';
+            setTimeout(function () { t.style.display = 'none'; }, 2200);
+        }
+
+        function lockScroll() { document.body.classList.add('no-scroll'); }
+
+        function anyModalOpen() {
+            return ['giftModal', 'pfModal'].some(function (id) {
+                return document.getElementById(id).style.display === 'flex';
+            });
+        }
+
+        function unlockIfClosed() {
+            if (!anyModalOpen()) document.body.classList.remove('no-scroll');
         }
 
         // Профіль того, хто подарував
         function openGifterProfile(uid) {
             const u = gifters[uid];
             if (!u) return;
-            document.getElementById('giftModal').style.display = 'none';
+            pfUid = uid;
 
             const photo = u.photo_url || u.photo_url2;
             const pfPhoto = document.getElementById('pfPhoto');
@@ -471,11 +530,47 @@
             document.getElementById('pfModal').style.display = 'flex';
         }
 
-        document.getElementById('pfClose').addEventListener('click', function () {
+        let pfUid = null;
+
+        document.getElementById('pfBack').addEventListener('click', function () {
+            // Назад — до списку подарунків
             document.getElementById('pfModal').style.display = 'none';
+            document.getElementById('giftModal').style.display = 'flex';
         });
+
+        document.getElementById('pfLike').addEventListener('click', function () {
+            if (!pfUid) return;
+            const uid = pfUid;
+
+            sb.from('reactions').upsert({
+                from_user: tgUser.id,
+                to_user: uid,
+                kind: 'like',
+                notified: false
+            }, { onConflict: 'from_user,to_user' }).then(function () {}, console.error);
+
+            sb.from('users').select('rating').eq('user_id', uid).maybeSingle()
+                .then(function (r) {
+                    const nv = ((r.data && r.data.rating) || 0) + 1;
+                    sb.from('users').update({ rating: nv })
+                        .eq('user_id', uid).then(function () {}, console.error);
+                });
+
+            try { tg?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
+
+            // Закриваємо все
+            document.getElementById('pfModal').style.display = 'none';
+            document.getElementById('giftModal').style.display = 'none';
+            unlockIfClosed();
+            showToast('❤️ Лайк надіслано');
+        });
+
         document.getElementById('pfModal').addEventListener('click', function (e) {
-            if (e.target === this) this.style.display = 'none';
+            if (e.target === this) {
+                this.style.display = 'none';
+                document.getElementById('giftModal').style.display = 'none';
+                unlockIfClosed();
+            }
         });
 
         document.getElementById('giftBtn').addEventListener('click', function (e) {
@@ -484,9 +579,13 @@
         });
         document.getElementById('gmClose').addEventListener('click', function () {
             document.getElementById('giftModal').style.display = 'none';
+            unlockIfClosed();
         });
         document.getElementById('giftModal').addEventListener('click', function (e) {
-            if (e.target === this) this.style.display = 'none';
+            if (e.target === this) {
+                this.style.display = 'none';
+                unlockIfClosed();
+            }
         });
 
         // Кружечки-індикатори фото (клікабельні)
