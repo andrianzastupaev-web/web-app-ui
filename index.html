@@ -6,6 +6,7 @@
     <title>Мій профіль — Circles</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="i18n.js?v=1"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; touch-action: manipulation; }
 
@@ -289,31 +290,31 @@
 </head>
 <body>
     <div class="topbar">
-        <h1>💫 Circles <span>— мій профіль</span></h1>
+        <h1>💫 Circles <span data-i18n="p_title">— мій профіль</span></h1>
     </div>
 
     <div class="placeholder" id="needRegister">
         <div class="emoji">📝</div>
-        <h2>Створи свою анкету</h2>
-        <p>Додай фото, ім'я та пару слів про себе — і починай знайомитися</p>
-        <a class="cta" href="edit.html?v=11">Заповнити анкету</a>
+        <h2 data-i18n="p_create_title">Створи свою анкету</h2>
+        <p data-i18n="p_create_text">Додай фото, ім'я та пару слів про себе — і починай знайомитися</p>
+        <a class="cta" href="edit.html?v=11" data-i18n="scr_register_btn">Заповнити анкету</a>
     </div>
 
     <div class="placeholder" id="moderation">
         <div class="emoji">⏳</div>
-        <h2>Анкета на модерації</h2>
-        <p>Адмін перевіряє твою анкету.<br>Це зазвичай займає кілька хвилин.</p>
+        <h2 data-i18n="scr_mod_title">Анкета на модерації</h2>
+        <p data-i18n="scr_mod_text2">Адмін перевіряє твою анкету.<br>Це зазвичай займає кілька хвилин.</p>
     </div>
 
     <div class="placeholder" id="loading">
         <div class="emoji">⏳</div>
-        <h2>Завантажую профіль...</h2>
+        <h2 data-i18n="scr_loading_profile">Завантажую профіль...</h2>
     </div>
 
     <div class="placeholder" id="loadError">
         <div class="emoji">⚠️</div>
-        <h2>Не вдалося завантажити</h2>
-        <p>Закрий і відкрий додаток ще раз</p>
+        <h2 data-i18n="scr_load_err_title">Не вдалося завантажити</h2>
+        <p data-i18n="scr_load_err_text">Закрий і відкрий додаток ще раз</p>
     </div>
 
     <div id="profileWrap" style="display: none;">
@@ -331,14 +332,25 @@
                 </div>
             </div>
         </div>
-        <a class="edit-btn" href="edit.html?v=11"> Редагувати анкету</a>
-        <a class="support-btn" href="top.html">🏆 ТОП учасників</a>
+        <a class="edit-btn" href="edit.html?v=11" data-i18n="p_edit"> Редагувати анкету</a>
+        <a class="support-btn" href="top.html" data-i18n="p_top">🏆 ТОП учасників</a>
+        <button class="support-btn" id="langBtn" style="cursor:pointer" data-i18n="p_lang">🌐 Мова</button>
+    <!-- Вибір мови -->
+    <div class="gift-modal" id="langModal">
+        <div class="gift-modal-card">
+            <h3 data-i18n="p_lang_title">Мова / Language</h3>
+            <button id="langUa" style="display:block;width:100%;padding:13px;margin-bottom:8px;border:none;border-radius:12px;background:#2a2a40;color:#fff;font-size:15px;font-weight:700;cursor:pointer">🇺🇦 Українська</button>
+            <button id="langEn" style="display:block;width:100%;padding:13px;margin-bottom:8px;border:none;border-radius:12px;background:#2a2a40;color:#fff;font-size:15px;font-weight:700;cursor:pointer">🇬🇧 English</button>
+            <button class="gm-close" id="langClose" data-i18n="close">Закрити</button>
+        </div>
+    </div>
+
     <!-- Подарунки: хто і коли -->
     <div class="gift-modal" id="giftModal">
         <div class="gift-modal-card">
             <h3 id="gmTitle">🎁 Подарунки</h3>
             <div id="gmList"></div>
-            <button class="gm-close" id="gmClose">Закрити</button>
+            <button class="gm-close" id="gmClose" data-i18n="close">Закрити</button>
         </div>
     </div>
 
@@ -351,8 +363,8 @@
             <div class="pf-meta" id="pfMeta"></div>
             <div class="pf-bio" id="pfBio"></div>
             <div class="pf-actions">
-                <button class="pf-like" id="pfLike">❤️ Лайкнути</button>
-                <button class="pf-back" id="pfBack">← Назад</button>
+                <button class="pf-like" id="pfLike" data-i18n="b_like_btn">❤️ Лайкнути</button>
+                <button class="pf-back" id="pfBack" data-i18n="b_back">← Назад</button>
             </div>
         </div>
     </div>
@@ -360,9 +372,9 @@
     <div class="toast" id="toast"></div>
 
     <nav class="bottom-nav">
-        <a href="search.html?v=20" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=21" title="Пошук анкет">🔍</a>
         <a href="index.html" class="current" title="Мій профіль">👤</a>
-        <a href="bottle.html?v=31" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=32" title="Пляшечка">🍾</a>
     </nav>
 
     <script>
@@ -404,9 +416,32 @@
 
         function fmtGiftDate(iso) {
             try {
-                return new Date(iso).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' });
+                var loc = window.CIRCLES_I18N.getLang() === 'en' ? 'en-GB' : 'uk-UA';
+                return new Date(iso).toLocaleDateString(loc, { day: 'numeric', month: 'long' });
             } catch (e) { return ''; }
         }
+
+        // === 🌐 Вибір мови ===
+        document.getElementById('langBtn').addEventListener('click', function () {
+            document.getElementById('langModal').style.display = 'flex';
+            lockScroll();
+        });
+        document.getElementById('langClose').addEventListener('click', function () {
+            document.getElementById('langModal').style.display = 'none';
+            unlockIfClosed();
+        });
+        document.getElementById('langModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+                unlockIfClosed();
+            }
+        });
+        document.getElementById('langUa').addEventListener('click', function () {
+            window.CIRCLES_I18N.setLang('ua');
+        });
+        document.getElementById('langEn').addEventListener('click', function () {
+            window.CIRCLES_I18N.setLang('en');
+        });
 
         // === 🎁 Подарунки, які отримав ===
         let myGifts = [];
@@ -454,20 +489,20 @@
             list.innerHTML = '';
 
             if (!myGifts.length) {
-                title.textContent = '🎁 Подарунки';
+                title.textContent = t('p_gifts_title');
                 const d = document.createElement('div');
                 d.className = 'gm-empty';
-                d.textContent = 'Ще ніхто не подарував 🙈';
+                d.textContent = t('p_gifts_empty');
                 list.appendChild(d);
             } else {
-                title.textContent = '🎁 Подарунки — ' + myGifts.length;
+                title.textContent = t('p_gifts_title') + ' — ' + myGifts.length;
                 myGifts.forEach(function (g) {
                     const u = gifters[g.from_user] || {};
                     const div = document.createElement('div');
                     div.className = 'gift-row';
                     div.innerHTML = '<div class="gr-emoji">' + (GIFT_EMOJI[g.gift] || '🎁') + '</div>'
                         + '<div class="gr-info">'
-                        + '<div class="gr-name">' + escapeHtml(u.first_name || 'Учасник') + '</div>'
+                        + '<div class="gr-name">' + escapeHtml(u.first_name || t('member')) + '</div>'
                         + '<div class="gr-date">' + fmtGiftDate(g.created_at) + '</div>'
                         + '</div>';
                     div.addEventListener('click', function () {
@@ -492,7 +527,7 @@
         function lockScroll() { document.body.classList.add('no-scroll'); }
 
         function anyModalOpen() {
-            return ['giftModal', 'pfModal'].some(function (id) {
+            return ['giftModal', 'pfModal', 'langModal'].some(function (id) {
                 return document.getElementById(id).style.display === 'flex';
             });
         }
@@ -561,7 +596,7 @@
             document.getElementById('pfModal').style.display = 'none';
             document.getElementById('giftModal').style.display = 'none';
             unlockIfClosed();
-            showToast('❤️ Лайк надіслано');
+            showToast(t('p_like_sent'));
         });
 
         document.getElementById('pfModal').addEventListener('click', function (e) {
