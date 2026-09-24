@@ -6,6 +6,7 @@
     <title>Пляшечка — Circles</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="i18n.js?v=1"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; touch-action: manipulation; }
 
@@ -340,27 +341,27 @@
 
         <div class="placeholder" id="moderation">
         <div class="emoji">⏳</div>
-        <h2>Анкета на модерації</h2>
-        <p>Адмін перевіряє твою анкету. Скоро все буде!</p>
+        <h2 data-i18n="scr_mod_title">Анкета на модерації</h2>
+        <p data-i18n="s_mod_text">Адмін перевіряє твою анкету. Скоро все буде!</p>
     </div>
 
 <div class="placeholder" id="needRegister">
         <div class="emoji">📝</div>
-        <h2>Спочатку — анкета</h2>
-        <p>Грають лише зареєстровані учасники</p>
-        <a class="cta" href="edit.html?v=11">Заповнити анкету</a>
+        <h2 data-i18n="b_g_reg_title">Спочатку — анкета</h2>
+        <p data-i18n="b_g_reg_text">Грають лише зареєстровані учасники</p>
+        <a class="cta" href="edit.html?v=11" data-i18n="scr_register_btn">Заповнити анкету</a>
     </div>
 
     <div class="placeholder" id="gameFull">
         <div class="emoji">🚪</div>
-        <h2>Гра повна</h2>
-        <p>За столом уже 4 гравці. Спробуй пізніше!</p>
-        <a class="cta" href="search.html?v=20">🔍 Пошук анкет</a>
+        <h2 data-i18n="b_game_full_title">Гра повна</h2>
+        <p data-i18n="b_game_full_text">За столом уже 4 гравці. Спробуй пізніше!</p>
+        <a class="cta" href="search.html?v=21" data-i18n="nav_search">🔍 Пошук анкет</a>
     </div>
 
     <div class="placeholder" id="loading">
         <div class="emoji">⏳</div>
-        <h2>Завантажую гру...</h2>
+        <h2 data-i18n="b_loading">Завантажую гру...</h2>
     </div>
 
     <div id="gameWrap">
@@ -387,7 +388,7 @@
             <div id="playersLayer"></div>
         </div>
 
-        <button class="spin-btn" id="spinBtn">🍾 Крутити!</button>
+        <button class="spin-btn" id="spinBtn">🍾</button>
 
         <div class="actions" id="actions" style="display: none;">
             <button data-act="kiss">😘<small>поцілунок</small></button>
@@ -398,13 +399,13 @@
 
         <div class="action-banner" id="actionBanner"></div>
 
-        <button class="leave-btn" id="leaveBtn">🚪 Залишити гру</button>
+        <button class="leave-btn" id="leaveBtn" data-i18n="b_leave">🚪 Залишити гру</button>
     </div>
 
     <nav class="bottom-nav">
-        <a href="search.html?v=20" title="Пошук анкет">🔍</a>
+        <a href="search.html?v=21" title="Пошук анкет">🔍</a>
         <a href="index.html" title="Мій профіль">👤</a>
-        <a href="bottle.html?v=31" class="current" title="Пляшечка">🍾</a>
+        <a href="bottle.html?v=32" class="current" title="Пляшечка">🍾</a>
     </nav>
 
     <!-- Інфо-панель гри -->
@@ -511,7 +512,7 @@
         }
 
         function nameOf(id) {
-            return profiles[id] ? (profiles[id].first_name || 'Учасник') : 'Учасник';
+            return profiles[id] ? (profiles[id].first_name || t('member')) : t('member');
         }
 
         let lastRenderKey = '';
@@ -599,7 +600,7 @@
             }
 
             const badge = ratingBadge(p.rating || 0);
-            pm.name.textContent = badge + ' ' + (p.first_name || 'Учасник') + (p.age ? ', ' + p.age : '');
+            pm.name.textContent = badge + ' ' + (p.first_name || t('member')) + (p.age ? ', ' + p.age : '');
             pm.meta.textContent = p.city ? '📍 ' + p.city : '';
             pm.bio.textContent = p.bio ? '❝ ' + p.bio + ' ❞' : '';
             pm.bio.style.display = p.bio ? 'block' : 'none';
@@ -636,7 +637,7 @@
                 });
 
             try { tg?.HapticFeedback?.notificationOccurred('success'); } catch (e) {}
-            els.banner.textContent = '❤️ Ти лайкнув ' + nameOf(uid) + '!';
+            els.banner.textContent = t('b_you_liked').replace('{n}', nameOf(uid));
             els.banner.classList.add('shown');
             setTimeout(function () { els.banner.classList.remove('shown'); }, 2000);
         });
@@ -752,16 +753,16 @@
 
             if (game.status === 'waiting') {
                 if (count < 2) {
-                    els.statusLine.textContent = 'Стіл ' + game.id + ' • Чекаємо ще гравців (' + count + '/' + MAX_PLAYERS + ')';
+                    els.statusLine.textContent = t('b_table') + ' ' + game.id + ' • ' + t('b_wait_more') + count + '/' + MAX_PLAYERS + ')';
                     els.spinBtn.style.display = 'block';
                     els.spinBtn.disabled = true;
-                    els.spinBtn.textContent = '⏳ Чекаємо гравців (потрібно 2+)';
+                    els.spinBtn.textContent = t('b_wait_need');
                 } else {
-                    els.statusLine.textContent = 'Стіл ' + game.id + ' • Гравців ' + count + '/' + MAX_PLAYERS + ' • Крутить: ' + nameOf(game.spinner || game.players[0]);
+                    els.statusLine.textContent = t('b_table') + ' ' + game.id + ' • ' + t('b_players') + ' ' + count + '/' + MAX_PLAYERS + ' • ' + t('b_turn') + nameOf(game.spinner || game.players[0]);
                     els.spinBtn.style.display = 'block';
                     const myTurn = !(game.spinner && game.spinner !== tgUser.id);
                     els.spinBtn.disabled = !myTurn;
-                    els.spinBtn.textContent = myTurn ? '🍾 Крутити!' : '⏳ ' + nameOf(game.spinner) + ' крутить...';
+                    els.spinBtn.textContent = myTurn ? t('b_spin') : '⏳ ' + nameOf(game.spinner) + t('b_spinning_wait');
                 }
             }
 
@@ -771,19 +772,19 @@
 
                 if (game.status === 'spinning') {
                     if (game.spinner === tgUser.id) {
-                        els.statusLine.textContent = 'Пляшечка вказала на ' + nameOf(game.target) + '! Обери дію:';
+                        els.statusLine.textContent = t('b_pointed_at') + nameOf(game.target) + t('b_choose_action');
                         els.actions.style.display = 'flex';
                     } else {
-                        els.statusLine.textContent = nameOf(game.spinner) + ' обирає дію для ' + nameOf(game.target) + '...';
+                        els.statusLine.textContent = nameOf(game.spinner) + t('b_choosing') + nameOf(game.target) + '...';
                     }
                 }
 
                 if (game.status === 'result' && game.action) {
-                    els.banner.textContent = ACTION_TEXT[game.action]
+                    els.banner.textContent = t('b_a_' + game.action)
                         .replace('{a}', nameOf(game.spinner))
                         .replace('{b}', nameOf(game.target));
                     els.banner.classList.add('shown');
-                    els.statusLine.textContent = 'Наступним крутить: ' + nameOf(game.target);
+                    els.statusLine.textContent = t('b_next_spin') + nameOf(game.target);
 
                     if (advanceRound !== game.round) {
                         advanceRound = game.round;
