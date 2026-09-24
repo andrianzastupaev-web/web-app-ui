@@ -183,6 +183,17 @@
             white-space: nowrap;
         }
 
+        .lang-btn {
+            position: absolute; top: 10px; right: 54px;
+            width: 38px; height: 38px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px;
+            cursor: pointer;
+            z-index: 2;
+        }
         /* Профіль дарувальника */
         .gift-row { cursor: pointer; }
         .pf-modal {
@@ -325,6 +336,7 @@
                 <div class="photo-dots" id="cDots"></div>
                 <span class="badge" id="cBadge"></span>
                 <button class="gift-btn" id="giftBtn" title="Подарунки">🎁<span class="gift-count" id="giftCount"></span></button>
+                <button class="lang-btn" id="langBtn" title="Мова">🌐</button>
                 <div class="overlay">
                     <div class="name" id="cName"></div>
                     <div class="meta" id="cMeta"></div>
@@ -332,9 +344,8 @@
                 </div>
             </div>
         </div>
-        <a class="edit-btn" href="edit.html?v=11" data-i18n="p_edit"> Редагувати анкету</a>
+        <a class="edit-btn" href="edit.html?v=11" data-i18n="p_edit">Редагувати анкету</a>
         <a class="support-btn" href="top.html" data-i18n="p_top">🏆 ТОП учасників</a>
-        <button class="support-btn" id="langBtn" style="cursor:pointer" data-i18n="p_lang">🌐 Мова</button>
     <!-- Вибір мови -->
     <div class="gift-modal" id="langModal">
         <div class="gift-modal-card">
