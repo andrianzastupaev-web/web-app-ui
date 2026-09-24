@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="utf-8">
@@ -344,7 +344,7 @@
                 </div>
             </div>
         </div>
-        <a class="edit-btn" href="edit.html?v=11" data-i18n="p_edit">Редагувати анкету</a>
+        <a class="edit-btn" href="edit.html?v=11" data-i18n="p_edit"> Редагувати анкету</a>
         <a class="support-btn" href="top.html" data-i18n="p_top">🏆 ТОП учасників</a>
     <!-- Вибір мови -->
     <div class="gift-modal" id="langModal">
@@ -535,7 +535,14 @@
             setTimeout(function () { t.style.display = 'none'; }, 2200);
         }
 
-        function lockScroll() { document.body.classList.add('no-scroll'); }
+        // Блокування скролу без стрибка: фіксуємо body і пам'ятаємо позицію
+        let savedScrollY = 0;
+        function lockScroll() {
+            savedScrollY = window.scrollY || 0;
+            document.body.style.position = 'fixed';
+            document.body.style.top = (-savedScrollY) + 'px';
+            document.body.style.width = '100%';
+        }
 
         function anyModalOpen() {
             return ['giftModal', 'pfModal', 'langModal'].some(function (id) {
@@ -544,7 +551,11 @@
         }
 
         function unlockIfClosed() {
-            if (!anyModalOpen()) document.body.classList.remove('no-scroll');
+            if (anyModalOpen()) return;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            window.scrollTo(0, savedScrollY);
         }
 
         // Профіль того, хто подарував
